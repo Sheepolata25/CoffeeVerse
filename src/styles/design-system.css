@@ -1,0 +1,5 @@
+@layer components {
+  .card {
+    @apply bg-surface rounded-2xl shadow-card p-4 transition hover:shadow-soft;
+  }
+}

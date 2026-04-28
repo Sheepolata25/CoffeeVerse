@@ -1,0 +1,46 @@
+<div class="w-64 bg-surface h-full shadow-soft flex flex-col p-4 rounded-2xl">
+
+  <div class="text-3xl font-bold mb-8 text-center">
+    <span class="text-text-primary">Coffee</span><span class="text-coffee">Verse</span>
+  </div>
+
+  <nav class="flex flex-col gap-2">
+
+    <a routerLink="/" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="bg-primary-soft text-primary font-medium"
+      class="flex items-center gap-3 p-3 rounded-xl hover:bg-primary-soft text-text-secondary transition-colors">
+      <span>🏠</span>
+      <span>Accueil</span>
+    </a>
+
+    <a routerLink="/cafes" routerLinkActive="bg-primary-soft text-primary font-medium"
+      class="flex items-center gap-3 p-3 rounded-xl hover:bg-primary-soft text-text-secondary transition-colors">
+      <span>☕</span>
+      <span>Cafés</span>
+    </a>
+
+    <a routerLink="/favoris" routerLinkActive="bg-primary-soft text-primary font-medium"
+      class="flex items-center gap-3 p-3 rounded-xl hover:bg-primary-soft text-text-secondary transition-colors">
+      <span>⭐</span>
+      <span>Favoris</span>
+    </a>
+
+    <a routerLink="/profile" routerLinkActive="bg-primary-soft text-primary font-medium"
+      class="flex items-center gap-3 p-3 rounded-xl hover:bg-primary-soft text-text-secondary transition-colors">
+      <span>👤</span>
+      <span>Profil</span>
+    </a>
+
+  </nav>
+
+  <div class="mt-auto">
+    <button (click)="signOut()"
+      class="flex items-center gap-3 w-full p-3 rounded-xl text-text-secondary hover:bg-danger/10 hover:text-danger transition-colors">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+      </svg>
+      <span>Déconnexion</span>
+    </button>
+  </div>
+
+</div>
