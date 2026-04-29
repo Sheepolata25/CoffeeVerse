@@ -1,0 +1,120 @@
+<div class="flex gap-6 h-full">
+
+  <div class="flex-1 bg-surface shadow-soft p-6 rounded-2xl flex items-center justify-center">
+    <div class="w-full">
+
+      <h2 class="text-lg font-semibold text-text-primary mb-4">New Post</h2>
+
+      <form (ngSubmit)="submit()" class="flex flex-col gap-3">
+
+        <div>
+          <label class="block text-xs font-medium text-text-secondary mb-1.5 uppercase tracking-wide">
+            Title <span class="text-danger">*</span>
+          </label>
+          <input type="text" [(ngModel)]="form.title" name="title" required
+            placeholder="Your brew title"
+            class="w-full bg-background rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-text-secondary mb-1.5 uppercase tracking-wide">
+            Description <span class="text-danger">*</span>
+          </label>
+          <textarea [(ngModel)]="form.description" name="description" required rows="3"
+            placeholder="Tell us about your brew..."
+            class="w-full bg-background rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors resize-none"></textarea>
+        </div>
+
+        <div class="border-t border-background pt-3">
+          <p class="text-xs font-medium text-text-secondary uppercase tracking-wide mb-3">Equipment (optional)</p>
+          <div class="flex flex-col gap-2.5">
+            <input type="text" [(ngModel)]="form.machine_brand" name="machine_brand"
+              placeholder="Espresso machine brand"
+              class="w-full bg-background rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
+            <input type="text" [(ngModel)]="form.grinder_brand" name="grinder_brand"
+              placeholder="Grinder brand"
+              class="w-full bg-background rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
+            <input type="text" [(ngModel)]="form.coffee_brand" name="coffee_brand"
+              placeholder="Coffee brand"
+              class="w-full bg-background rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
+            <input type="text" [(ngModel)]="form.bean_type" name="bean_type"
+              placeholder="Bean type (e.g. Arabica, Robusta)"
+              class="w-full bg-background rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
+            <input type="number" [(ngModel)]="form.water_temp" name="water_temp"
+              placeholder="Water temperature (°C)" min="0" max="100"
+              class="w-full bg-background rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
+          </div>
+        </div>
+
+        @if (error()) {
+          <p class="text-danger text-sm">{{ error() }}</p>
+        }
+
+        <button type="submit" [disabled]="submitting() || !form.title.trim() || !form.description.trim()"
+          class="w-full bg-primary text-white font-medium py-2.5 rounded-xl hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors mt-1">
+          {{ submitting() ? 'Publishing...' : 'Publish' }}
+        </button>
+
+      </form>
+
+    </div>
+  </div>
+
+  <div class="w-80 shrink-0 flex flex-col gap-4">
+
+    <h1 class="text-2xl font-bold text-text-primary">Posts</h1>
+
+    @for (post of posts(); track post.id) {
+      <div class="card flex flex-col gap-3">
+
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full bg-primary-soft flex items-center justify-center text-sm overflow-hidden shrink-0">
+              @if (post.profiles?.avatar_url) {
+                <img [src]="post.profiles!.avatar_url" [alt]="post.profiles!.username" class="w-full h-full object-cover" />
+              } @else {
+                ☕
+              }
+            </div>
+            <span class="font-medium text-text-primary text-sm">{{ post.profiles?.username }}</span>
+          </div>
+          <span class="text-xs text-text-secondary">{{ post.created_at | date:'mediumDate' }}</span>
+        </div>
+
+        <div>
+          <h2 class="font-semibold text-text-primary mb-1">{{ post.title }}</h2>
+          <p class="text-text-secondary text-sm leading-relaxed">{{ post.description }}</p>
+        </div>
+
+        @if (post.machine_brand || post.grinder_brand || post.coffee_brand || post.bean_type || post.water_temp) {
+          <div class="flex flex-wrap gap-2">
+            @if (post.machine_brand) {
+              <span class="bg-primary-soft text-primary text-xs px-2.5 py-1 rounded-full">☕ {{ post.machine_brand }}</span>
+            }
+            @if (post.grinder_brand) {
+              <span class="bg-primary-soft text-primary text-xs px-2.5 py-1 rounded-full">⚙️ {{ post.grinder_brand }}</span>
+            }
+            @if (post.coffee_brand) {
+              <span class="bg-primary-soft text-primary text-xs px-2.5 py-1 rounded-full">🌱 {{ post.coffee_brand }}</span>
+            }
+            @if (post.bean_type) {
+              <span class="bg-primary-soft text-primary text-xs px-2.5 py-1 rounded-full">🫘 {{ post.bean_type }}</span>
+            }
+            @if (post.water_temp) {
+              <span class="bg-primary-soft text-primary text-xs px-2.5 py-1 rounded-full">🌡️ {{ post.water_temp }}°C</span>
+            }
+          </div>
+        }
+
+      </div>
+    } @empty {
+      <div class="card flex flex-col items-center justify-center py-16 text-text-secondary">
+        <span class="text-5xl mb-4">☕</span>
+        <p class="font-medium">No posts yet</p>
+        <p class="text-sm mt-1">Be the first to share your brew!</p>
+      </div>
+    }
+
+  </div>
+
+</div>
