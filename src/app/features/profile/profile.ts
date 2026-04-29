@@ -7,6 +7,7 @@ import { AuthService } from '../../core/services/auth.service';
   selector: 'app-profile',
   imports: [FormsModule],
   templateUrl: './profile.html',
+  styleUrl: './profile.css',
 })
 export class ProfilePage implements OnInit {
   private profileService = inject(ProfileService);

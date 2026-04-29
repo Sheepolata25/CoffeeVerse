@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, effect } from '@angular/core';
 import { Profile } from '../models/profile.model';
 import { AuthService } from './auth.service';
 import { SupabaseService } from './supabase.service';
@@ -9,6 +9,17 @@ export class ProfileService {
   private auth = inject(AuthService);
 
   profile = signal<Profile | null>(null);
+
+  constructor() {
+    effect(() => {
+      const user = this.auth.currentUser();
+      if (user) {
+        this.loadProfile();
+      } else {
+        this.profile.set(null);
+      }
+    });
+  }
 
   async loadProfile() {
     const userId = this.auth.currentUser()?.id;
