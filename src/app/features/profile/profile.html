@@ -16,16 +16,16 @@
           {{ profile()?.badge }}
         </span>
       </div>
-      <p class="text-text-secondary text-sm">{{ profile()?.bio || 'Pas encore de bio.' }}</p>
+      <p class="text-text-secondary text-sm">{{ profile()?.bio || 'No bio yet.' }}</p>
     </div>
   </div>
 
   <div class="card flex flex-col gap-5">
-    <h2 class="font-semibold text-text-primary">Modifier mon profil</h2>
+    <h2 class="font-semibold text-text-primary">Update my profile</h2>
 
     @if (success()) {
       <p class="text-sm text-center bg-success/20 text-green-700 rounded-xl p-3">
-        Profil mis à jour !
+        Profile updated!
       </p>
     }
     @if (error()) {
@@ -35,7 +35,7 @@
     <form class="flex flex-col gap-4" (ngSubmit)="onSubmit()" #f="ngForm">
 
       <div class="flex flex-col gap-1.5">
-        <label class="text-sm font-medium text-text-primary">Nom d'utilisateur</label>
+        <label class="text-sm font-medium text-text-primary">Username</label>
         <input
           type="text"
           [(ngModel)]="username"
@@ -50,13 +50,13 @@
           [(ngModel)]="bio"
           name="bio"
           rows="3"
-          placeholder="Raconte-nous ta passion pour le café..."
+          placeholder="Tell us about your passion for coffee..."
           class="w-full border border-border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-text-primary placeholder-text-secondary transition resize-none">
         </textarea>
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <label class="text-sm font-medium text-text-primary">URL de l'avatar</label>
+        <label class="text-sm font-medium text-text-primary">URL of the avatar</label>
         <input
           type="url"
           [(ngModel)]="avatarUrl"
@@ -69,7 +69,7 @@
         type="submit"
         [disabled]="loading() || !f.valid"
         class="w-full bg-primary text-white font-medium py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed">
-        {{ loading() ? 'Sauvegarde...' : 'Sauvegarder' }}
+        {{ loading() ? 'Saving...' : 'Save' }}
       </button>
 
     </form>
@@ -78,7 +78,7 @@
   <button
     (click)="signOut()"
     class="text-sm text-text-secondary hover:text-danger transition text-center">
-    Se déconnecter
+    Log out
   </button>
 
 </div>
