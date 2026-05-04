@@ -34,7 +34,7 @@ export class ProfileService {
     this.profile.set(data);
   }
 
-  async updateProfile(updates: Partial<Pick<Profile, 'username' | 'bio' | 'avatar_url'>>) {
+  async updateProfile(updates: Partial<Omit<Profile, 'id' | 'badge' | 'created_at' | 'updated_at'>>) {
     const userId = this.auth.currentUser()?.id;
     if (!userId) return { error: new Error('Non authentifié') };
 

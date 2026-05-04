@@ -1,6 +1,7 @@
-<div class="flex gap-6 h-full">
+<div class="flex gap-6">
 
-  <div class="flex-1 bg-surface shadow-soft p-6 rounded-2xl flex items-center justify-center">
+  <!-- Form panel -->
+  <div class="w-96 shrink-0 bg-surface shadow-soft p-6 rounded-2xl sticky top-4 h-[calc(100vh-2.5rem)] flex items-center justify-center">
     <div class="w-full">
 
       <h2 class="text-lg font-semibold text-text-primary mb-4">New Post</h2>
@@ -12,7 +13,7 @@
             Title <span class="text-danger">*</span>
           </label>
           <input type="text" [(ngModel)]="form.title" name="title" required
-            placeholder="Title"
+            placeholder="Your post title..."
             class="w-full bg-background rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
         </div>
 
@@ -20,29 +21,29 @@
           <label class="block text-xs font-medium text-text-secondary mb-1.5 uppercase tracking-wide">
             Description <span class="text-danger">*</span>
           </label>
-          <textarea [(ngModel)]="form.description" name="description" required rows="5"
-            placeholder="Description..."
+          <textarea [(ngModel)]="form.description" name="description" required rows="4"
+            placeholder="Share your thoughts, your coffee journey, your recipe..."
             class="w-full bg-background rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors resize-none"></textarea>
         </div>
 
         <div class="border-t border-background pt-3">
           <p class="text-xs font-medium text-text-secondary uppercase tracking-wide mb-3">Equipment (optional)</p>
-          <div class="flex flex-col gap-2.5">
+          <div class="grid grid-cols-2 gap-2">
             <input type="text" [(ngModel)]="form.machine_brand" name="machine_brand"
-              placeholder="Espresso machine brand"
-              class="w-full bg-background rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
+              placeholder="Espresso machine"
+              class="bg-background rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
             <input type="text" [(ngModel)]="form.grinder_brand" name="grinder_brand"
-              placeholder="Grinder brand"
-              class="w-full bg-background rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
+              placeholder="Grinder"
+              class="bg-background rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
             <input type="text" [(ngModel)]="form.coffee_brand" name="coffee_brand"
               placeholder="Coffee brand"
-              class="w-full bg-background rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
+              class="bg-background rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
             <input type="text" [(ngModel)]="form.bean_type" name="bean_type"
-              placeholder="Bean type (e.g. Arabica, Robusta)"
-              class="w-full bg-background rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
+              placeholder="Bean type (e.g. Arabica)"
+              class="bg-background rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
             <input type="number" [(ngModel)]="form.water_temp" name="water_temp"
               placeholder="Water temperature (°C)" min="0" max="100"
-              class="w-full bg-background rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
+              class="col-span-2 bg-background rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
           </div>
         </div>
 
@@ -60,124 +61,129 @@
     </div>
   </div>
 
-  <div class="w-80 shrink-0 flex flex-col gap-4">
+  <!-- Posts feed -->
+  <div class="flex-1 sticky top-4 h-[calc(100vh-2.5rem)] flex flex-col gap-4">
 
-    <h1 class="text-2xl font-bold text-text-primary">Posts</h1>
+    <h1 class="text-2xl font-bold text-text-primary shrink-0">Recent Posts</h1>
 
-    @for (post of posts(); track post.id) {
-      <div class="card bg-primary-soft flex flex-col gap-3 p-4 rounded-2xl">
+    <div class="flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 pb-2">
 
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-full bg-surface flex items-center justify-center text-sm overflow-hidden shrink-0">
-              @if (post.profiles?.avatar_url) {
-                <img [src]="post.profiles!.avatar_url" [alt]="post.profiles!.username" class="w-full h-full object-cover" />
-              } @else {
-                <svg class="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              }
+      @for (post of posts(); track post.id) {
+        <div class="card bg-primary-soft flex flex-col gap-3 p-4 rounded-2xl">
+
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-full bg-surface flex items-center justify-center text-sm overflow-hidden shrink-0">
+                @if (post.profiles?.avatar_url) {
+                  <img [src]="post.profiles!.avatar_url" [alt]="post.profiles!.username" class="w-full h-full object-cover" />
+                } @else {
+                  <svg class="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                }
+              </div>
+              <span class="font-medium text-text-primary text-sm">{{ post.profiles?.username }}</span>
             </div>
-            <span class="font-medium text-text-primary text-sm">{{ post.profiles?.username }}</span>
+            <span class="text-xs text-text-secondary">{{ post.created_at | date:'mediumDate' }}</span>
           </div>
-          <span class="text-xs text-text-secondary">{{ post.created_at | date:'mediumDate' }}</span>
+
+          @if (editingPostId() === post.id) {
+
+            <div class="flex flex-col gap-2.5">
+              <input type="text" [(ngModel)]="editForm.title" name="edit-title"
+                class="w-full bg-background rounded-xl px-3 py-2 text-sm text-text-primary outline-none border border-transparent focus:border-primary transition-colors" />
+              <textarea [(ngModel)]="editForm.description" name="edit-description" rows="10"
+                class="w-full bg-background rounded-xl px-3 py-2 text-sm text-text-primary outline-none border border-transparent focus:border-primary transition-colors resize-none"></textarea>
+              <div class="grid grid-cols-2 gap-2">
+                <input type="text" [(ngModel)]="editForm.machine_brand" name="edit-machine"
+                  placeholder="Machine" class="w-full bg-background rounded-xl px-3 py-2 text-xs text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
+                <input type="text" [(ngModel)]="editForm.grinder_brand" name="edit-grinder"
+                  placeholder="Grinder" class="w-full bg-background rounded-xl px-3 py-2 text-xs text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
+                <input type="text" [(ngModel)]="editForm.coffee_brand" name="edit-coffee"
+                  placeholder="Coffee" class="w-full bg-background rounded-xl px-3 py-2 text-xs text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
+                <input type="text" [(ngModel)]="editForm.bean_type" name="edit-bean"
+                  placeholder="Bean type" class="w-full bg-background rounded-xl px-3 py-2 text-xs text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
+              </div>
+              <input type="number" [(ngModel)]="editForm.water_temp" name="edit-temp"
+                placeholder="Water temperature (°C)" min="0" max="100"
+                class="w-full bg-background rounded-xl px-3 py-2 text-xs text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
+            </div>
+
+            <div class="flex gap-2 pt-1">
+              <button (click)="saveEdit(post.id)" [disabled]="editSaving() || !editForm.title.trim() || !editForm.description.trim()"
+                class="flex-1 bg-primary text-white text-xs font-medium py-2 rounded-xl hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                {{ editSaving() ? 'Saving...' : 'Save' }}
+              </button>
+              <button (click)="cancelEdit()"
+                class="flex-1 bg-background text-text-secondary text-xs font-medium py-2 rounded-xl hover:text-text-primary transition-colors">
+                Cancel
+              </button>
+            </div>
+
+          } @else {
+
+            <div>
+              <h2 class="font-semibold text-text-primary mb-1">{{ post.title }}</h2>
+              <p class="text-text-secondary text-sm leading-relaxed whitespace-pre-wrap">{{ post.description }}</p>
+            </div>
+
+            @if (post.machine_brand || post.grinder_brand || post.coffee_brand || post.bean_type || post.water_temp) {
+              <div class="flex flex-wrap gap-2">
+                @if (post.machine_brand) {
+                  <span class="bg-background text-primary text-xs px-2.5 py-1 rounded-full">{{ post.machine_brand }}</span>
+                }
+                @if (post.grinder_brand) {
+                  <span class="bg-background text-primary text-xs px-2.5 py-1 rounded-full">{{ post.grinder_brand }}</span>
+                }
+                @if (post.coffee_brand) {
+                  <span class="bg-background text-primary text-xs px-2.5 py-1 rounded-full">{{ post.coffee_brand }}</span>
+                }
+                @if (post.bean_type) {
+                  <span class="bg-background text-primary text-xs px-2.5 py-1 rounded-full">{{ post.bean_type }}</span>
+                }
+                @if (post.water_temp) {
+                  <span class="bg-background text-primary text-xs px-2.5 py-1 rounded-full">{{ post.water_temp }}°C</span>
+                }
+              </div>
+            }
+
+            @if (post.user_id === currentUserId()?.id) {
+              <div class="flex gap-2 pt-2 border-t border-background">
+                <button (click)="startEdit(post)"
+                  class="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl bg-background text-text-secondary hover:text-primary hover:bg-primary-soft transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Edit
+                </button>
+                <button (click)="deletePost(post.id)"
+                  class="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl bg-background text-text-secondary hover:text-danger hover:bg-danger/10 transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Delete
+                </button>
+              </div>
+            }
+
+          }
+
         </div>
+      } @empty {
+        <div class="card bg-primary-soft flex flex-col items-center justify-center py-16 text-text-secondary">
+          <svg class="w-12 h-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M7 10h10l-1 8H8l-1-8zm10 2h1.5a2 2 0 0 1 0 4H17M10 6v2M13 5v3" />
+          </svg>
+          <p class="font-medium">No posts yet</p>
+          <p class="text-sm mt-1">Be the first to share your brew!</p>
+        </div>
+      }
 
-        @if (editingPostId() === post.id) {
-
-          <div class="flex flex-col gap-2.5">
-            <input type="text" [(ngModel)]="editForm.title" name="edit-title"
-              class="w-full bg-background rounded-xl px-3 py-2 text-sm text-text-primary outline-none border border-transparent focus:border-primary transition-colors" />
-            <textarea [(ngModel)]="editForm.description" name="edit-description" rows="2"
-              class="w-full bg-background rounded-xl px-3 py-2 text-sm text-text-primary outline-none border border-transparent focus:border-primary transition-colors resize-none"></textarea>
-            <div class="grid grid-cols-2 gap-2">
-              <input type="text" [(ngModel)]="editForm.machine_brand" name="edit-machine"
-                placeholder="Machine" class="w-full bg-background rounded-xl px-3 py-2 text-xs text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
-              <input type="text" [(ngModel)]="editForm.grinder_brand" name="edit-grinder"
-                placeholder="Grinder" class="w-full bg-background rounded-xl px-3 py-2 text-xs text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
-              <input type="text" [(ngModel)]="editForm.coffee_brand" name="edit-coffee"
-                placeholder="Coffee" class="w-full bg-background rounded-xl px-3 py-2 text-xs text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
-              <input type="text" [(ngModel)]="editForm.bean_type" name="edit-bean"
-                placeholder="Bean type" class="w-full bg-background rounded-xl px-3 py-2 text-xs text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
-            </div>
-            <input type="number" [(ngModel)]="editForm.water_temp" name="edit-temp"
-              placeholder="Water temperature (°C)" min="0" max="100"
-              class="w-full bg-background rounded-xl px-3 py-2 text-xs text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
-          </div>
-
-          <div class="flex gap-2 pt-1">
-            <button (click)="saveEdit(post.id)" [disabled]="editSaving() || !editForm.title.trim() || !editForm.description.trim()"
-              class="flex-1 bg-primary text-white text-xs font-medium py-2 rounded-xl hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-              {{ editSaving() ? 'Saving...' : 'Save' }}
-            </button>
-            <button (click)="cancelEdit()"
-              class="flex-1 bg-background text-text-secondary text-xs font-medium py-2 rounded-xl hover:text-text-primary transition-colors">
-              Cancel
-            </button>
-          </div>
-
-        } @else {
-
-          <div>
-            <h2 class="font-semibold text-text-primary mb-1">{{ post.title }}</h2>
-            <p class="text-text-secondary text-sm leading-relaxed">{{ post.description }}</p>
-          </div>
-
-          @if (post.machine_brand || post.grinder_brand || post.coffee_brand || post.bean_type || post.water_temp) {
-            <div class="flex flex-wrap gap-2">
-              @if (post.machine_brand) {
-                <span class="bg-background text-primary text-xs px-2.5 py-1 rounded-full">☕ {{ post.machine_brand }}</span>
-              }
-              @if (post.grinder_brand) {
-                <span class="bg-background text-primary text-xs px-2.5 py-1 rounded-full">⚙️ {{ post.grinder_brand }}</span>
-              }
-              @if (post.coffee_brand) {
-                <span class="bg-background text-primary text-xs px-2.5 py-1 rounded-full">🌱 {{ post.coffee_brand }}</span>
-              }
-              @if (post.bean_type) {
-                <span class="bg-background text-primary text-xs px-2.5 py-1 rounded-full">🫘 {{ post.bean_type }}</span>
-              }
-              @if (post.water_temp) {
-                <span class="bg-background text-primary text-xs px-2.5 py-1 rounded-full">🌡️ {{ post.water_temp }}°C</span>
-              }
-            </div>
-          }
-
-          @if (post.user_id === currentUserId()?.id) {
-            <div class="flex gap-2 pt-1 border-t border-background">
-              <button (click)="startEdit(post)"
-                class="flex items-center gap-1.5 text-xs text-text-secondary hover:text-primary transition-colors">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                Edit
-              </button>
-              <button (click)="deletePost(post.id)"
-                class="flex items-center gap-1.5 text-xs text-text-secondary hover:text-danger transition-colors">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-                Delete
-              </button>
-            </div>
-          }
-
-        }
-
-      </div>
-    } @empty {
-      <div class="card bg-primary-soft flex flex-col items-center justify-center py-16 text-text-secondary">
-        <svg class="w-12 h-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-            d="M7 10h10l-1 8H8l-1-8zm10 2h1.5a2 2 0 0 1 0 4H17M10 6v2M13 5v3" />
-        </svg>
-        <p class="font-medium">No posts yet</p>
-        <p class="text-sm mt-1">Be the first to share your brew!</p>
-      </div>
-    }
+    </div>
 
   </div>
 
