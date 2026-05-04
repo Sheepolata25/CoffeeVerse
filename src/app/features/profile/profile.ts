@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, signal, effect } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ProfileService } from '../../core/services/profile.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -9,7 +9,7 @@ import { AuthService } from '../../core/services/auth.service';
   templateUrl: './profile.html',
   styleUrl: './profile.css',
 })
-export class ProfilePage implements OnInit {
+export class ProfilePage {
   private profileService = inject(ProfileService);
   private auth = inject(AuthService);
 
@@ -23,14 +23,15 @@ export class ProfilePage implements OnInit {
   error = signal<string | null>(null);
   loading = signal(false);
 
-  async ngOnInit() {
-    await this.profileService.loadProfile();
-    const p = this.profile();
-    if (p) {
-      this.username = p.username;
-      this.bio = p.bio ?? '';
-      this.avatarUrl = p.avatar_url ?? '';
-    }
+  constructor() {
+    effect(() => {
+      const p = this.profile();
+      if (p) {
+        this.username = p.username;
+        this.bio = p.bio ?? '';
+        this.avatarUrl = p.avatar_url ?? '';
+      }
+    });
   }
 
   async onSubmit() {
@@ -47,7 +48,7 @@ export class ProfilePage implements OnInit {
     this.loading.set(false);
 
     if (error) {
-      this.error.set('Une erreur est survenue, réessaie.');
+      this.error.set('An error occurred, please try again.');
       return;
     }
 
