@@ -53,6 +53,15 @@ export class PostService {
     return { error };
   }
 
+  async loadUserPosts(userId: string): Promise<Post[]> {
+    const { data } = await this.supabase.client
+      .from('posts')
+      .select('*, profiles(username, avatar_url)')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+    return (data as Post[]) ?? [];
+  }
+
   async deletePost(id: string) {
     const { error } = await this.supabase.client
       .from('posts')

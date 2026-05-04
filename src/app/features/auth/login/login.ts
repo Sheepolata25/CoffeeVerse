@@ -27,7 +27,7 @@ export class Login {
     this.loading.set(false);
 
     if (error) {
-      this.error.set('Email ou mot de passe incorrect.');
+      this.error.set('Wrong Email or password.');
       return;
     }
 
