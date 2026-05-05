@@ -1,8 +1,8 @@
 <div class="flex gap-6">
 
-  <div class="flex-1 min-w-0 flex flex-col gap-4 sticky top-4 h-[calc(100vh-2.5rem)]">
+  <div class="flex-1 min-w-0 flex flex-col sticky top-4 h-[calc(100vh-2.5rem)]">
 
-    <div class="bg-surface rounded-2xl shadow-card overflow-hidden shrink-0">
+    <div class="bg-surface rounded-2xl shadow-card overflow-hidden flex-1 min-h-0 flex flex-col">
       <div class="h-44 relative bg-gradient-to-br from-primary-soft to-primary/20">
         @if (profile()?.cover_url) {
           <img [src]="profile()!.cover_url" class="w-full h-full object-cover" alt="Cover" />
@@ -23,7 +23,7 @@
         </div>
       </div>
 
-      <div class="pt-12 px-6 pb-5 flex items-start justify-between gap-4">
+      <div class="pt-12 px-6 pb-5 flex items-start justify-between gap-4 shrink-0">
         <div>
           <div class="flex items-center gap-2 mb-1.5">
             <h1 class="text-xl font-bold text-text-primary">{{ profile()?.username }}</h1>
@@ -60,9 +60,6 @@
           Edit Profile
         </button>
       </div>
-    </div>
-
-    <div class="bg-surface rounded-2xl shadow-card overflow-hidden flex-1 min-h-0 flex flex-col">
 
       <div class="flex border-b border-border px-2 shrink-0">
         <button (click)="activeTab.set('overview')"
