@@ -1,10 +1,20 @@
 <div class="flex gap-6">
 
   <!-- Form panel -->
-  <div class="w-96 shrink-0 bg-surface shadow-soft p-6 rounded-2xl sticky top-4 h-[calc(100vh-2.5rem)] flex items-center justify-center">
-    <div class="w-full">
+  <div class="w-96 shrink-0 bg-surface shadow-soft p-6 rounded-2xl sticky top-4 h-[calc(100vh-2.5rem)] flex flex-col">
+    <div class="flex items-center justify-between mb-4 shrink-0">
+      <h2 class="text-lg font-semibold text-text-primary">
+        {{ editingDraftId() ? 'Edit Draft' : 'New Post' }}
+      </h2>
+      @if (editingDraftId()) {
+        <button type="button" (click)="cancelDraftEdit()"
+          class="text-xs text-text-secondary hover:text-text-primary transition-colors">
+          Cancel
+        </button>
+      }
+    </div>
 
-      <h2 class="text-lg font-semibold text-text-primary mb-4">New Post</h2>
+    <div class="flex-1 min-h-0 overflow-y-auto">
 
       <form (ngSubmit)="submit()" class="flex flex-col gap-3">
 
@@ -24,6 +34,61 @@
           <textarea [(ngModel)]="form.description" name="description" required rows="4"
             placeholder="Share your thoughts, your coffee journey, your recipe..."
             class="w-full bg-background rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors resize-none"></textarea>
+        </div>
+
+        <!-- Image upload -->
+        <div>
+          <label class="block text-xs font-medium text-text-secondary mb-1.5 uppercase tracking-wide">Photo</label>
+          @if (imagePreview()) {
+            <div class="relative rounded-xl overflow-hidden aspect-video bg-background">
+              <img [src]="imagePreview()" class="w-full h-full object-cover" alt="Preview" />
+              <button type="button" (click)="removeImage()"
+                class="absolute top-2 right-2 w-6 h-6 bg-black/50 text-white rounded-full flex items-center justify-center text-sm hover:bg-black/70 transition-colors">
+                ×
+              </button>
+            </div>
+          } @else {
+            <label class="flex flex-col items-center justify-center gap-1.5 h-20 bg-background rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary-soft/30 transition-colors cursor-pointer">
+              <svg class="w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span class="text-xs text-text-secondary">Click to add a photo</span>
+              <input type="file" accept="image/*" (change)="onImageSelect($event)" class="hidden" />
+            </label>
+          }
+        </div>
+
+        <!-- Tags input -->
+        <div>
+          <label class="block text-xs font-medium text-text-secondary mb-1.5 uppercase tracking-wide">Tags</label>
+          <div class="bg-background rounded-xl border border-transparent focus-within:border-primary transition-colors px-3 py-2 flex flex-wrap gap-1.5">
+            @for (tag of formTags(); track tag) {
+              <span class="flex items-center gap-1 bg-primary-soft text-primary text-xs font-medium px-2 py-0.5 rounded-full">
+                #{{ tag }}
+                <button type="button" (click)="removeFormTag(tag)" class="hover:text-primary/60 transition-colors leading-none">×</button>
+              </span>
+            }
+            <div class="relative flex-1 min-w-24">
+              <input type="text" [(ngModel)]="formTagInput" name="formTagInput"
+                placeholder="{{ formTags().length ? '' : 'Add tags...' }}"
+                (keydown)="onFormTagKeydown($event)"
+                (focus)="showSuggestions.set(true)"
+                (blur)="showSuggestions.set(false)"
+                class="w-full bg-transparent text-sm text-text-primary placeholder-text-secondary outline-none" />
+              @if (showSuggestions() && formTagSuggestions.length) {
+                <div class="absolute top-full left-0 mt-1 z-10 bg-surface rounded-xl shadow-soft border border-border overflow-hidden min-w-36">
+                  @for (suggestion of formTagSuggestions; track suggestion) {
+                    <button type="button" (mousedown)="addFormTag(suggestion)"
+                      class="w-full text-left px-3 py-1.5 text-sm text-text-primary hover:bg-primary-soft hover:text-primary transition-colors">
+                      #{{ suggestion }}
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+          <p class="text-xs text-text-secondary mt-1">Press Enter or comma to add a tag</p>
         </div>
 
         <div class="border-t border-background pt-3">
@@ -51,17 +116,66 @@
           <p class="text-danger text-sm">{{ error() }}</p>
         }
 
-        <button type="submit" [disabled]="submitting() || !form.title.trim() || !form.description.trim()"
-          class="w-full bg-primary text-white font-medium py-2.5 rounded-xl hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors mt-1">
-          {{ submitting() ? 'Publishing...' : 'Publish' }}
-        </button>
+        <div class="flex gap-2 mt-1 shrink-0">
+          <button type="button" (click)="saveDraft()" [disabled]="savingDraft() || !form.title.trim()"
+            class="flex-1 border border-border text-text-secondary font-medium py-2.5 rounded-xl hover:bg-background hover:text-text-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+            {{ savingDraft() ? 'Saving...' : 'Save draft' }}
+          </button>
+          <button type="submit" [disabled]="submitting() || !form.title.trim() || !form.description.trim()"
+            class="flex-1 bg-primary text-white font-medium py-2.5 rounded-xl hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+            {{ submitting() ? 'Publishing...' : 'Publish' }}
+          </button>
+        </div>
 
       </form>
 
+      @if (drafts().length) {
+      <div class="border-t border-border pt-4 mt-4 flex flex-col gap-2">
+        <p class="text-xs font-medium text-text-secondary uppercase tracking-wide shrink-0">
+          Drafts ({{ drafts().length }})
+        </p>
+        @for (draft of drafts(); track draft.id) {
+          <div class="flex items-start gap-2 p-2.5 rounded-xl bg-background group">
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-text-primary truncate">{{ draft.title }}</p>
+              @if (draft.description) {
+                <p class="text-xs text-text-secondary truncate">{{ draft.description }}</p>
+              }
+            </div>
+            <div class="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button (click)="loadDraftForEdit(draft)" title="Edit"
+                class="p-1.5 rounded-lg text-text-secondary hover:text-primary hover:bg-primary-soft transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+              <button (click)="publishDraft(draft)" title="Publish"
+                class="p-1.5 rounded-lg text-text-secondary hover:text-primary hover:bg-primary-soft transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M7 11l5-5m0 0l5 5m-5-5v12" />
+                </svg>
+              </button>
+              <button (click)="deleteDraft(draft.id)" title="Delete"
+                class="p-1.5 rounded-lg text-text-secondary hover:text-danger hover:bg-danger/10 transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+      }
+
     </div>
+
   </div>
 
   <!-- Posts feed -->
+
   <div class="flex-1 sticky top-4 h-[calc(100vh-2.5rem)] flex flex-col gap-4">
 
     <h1 class="text-2xl font-bold text-text-primary shrink-0">Recent Posts</h1>
@@ -93,8 +207,54 @@
             <div class="flex flex-col gap-2.5">
               <input type="text" [(ngModel)]="editForm.title" name="edit-title"
                 class="w-full bg-background rounded-xl px-3 py-2 text-sm text-text-primary outline-none border border-transparent focus:border-primary transition-colors" />
-              <textarea [(ngModel)]="editForm.description" name="edit-description" rows="10"
+              <textarea [(ngModel)]="editForm.description" name="edit-description" rows="4"
                 class="w-full bg-background rounded-xl px-3 py-2 text-sm text-text-primary outline-none border border-transparent focus:border-primary transition-colors resize-none"></textarea>
+
+              <!-- Edit image -->
+              @if (editImagePreview()) {
+                <div class="relative rounded-xl overflow-hidden h-40">
+                  <img [src]="editImagePreview()" class="w-full h-full object-cover" alt="Image" />
+                  <div class="absolute top-2 right-2 flex gap-1">
+                    <label class="p-1.5 rounded-lg bg-black/50 text-white hover:bg-black/70 transition-colors cursor-pointer" title="Change image">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <input type="file" accept="image/*" (change)="onEditImageSelect($event)" class="hidden" />
+                    </label>
+                    <button type="button" (click)="removeEditImage()" title="Remove image"
+                      class="p-1.5 rounded-lg bg-black/50 text-white hover:bg-black/70 transition-colors">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              } @else {
+                <label class="flex items-center justify-center gap-2 h-10 bg-background rounded-xl border border-dashed border-border hover:border-primary hover:bg-primary-soft/20 transition-colors cursor-pointer text-xs text-text-secondary hover:text-primary">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Add a photo
+                  <input type="file" accept="image/*" (change)="onEditImageSelect($event)" class="hidden" />
+                </label>
+              }
+
+              <!-- Edit tags -->
+              <div class="bg-surface rounded-xl border border-border px-3 py-2 flex flex-wrap gap-1.5">
+                @for (tag of editTags(); track tag) {
+                  <span class="flex items-center gap-1 bg-primary-soft text-primary text-xs font-medium px-2 py-0.5 rounded-full">
+                    #{{ tag }}
+                    <button type="button" (click)="removeEditTag(tag)" class="hover:text-primary/60 transition-colors leading-none">×</button>
+                  </span>
+                }
+                <input type="text" [(ngModel)]="editTagInput" name="edit-tag-input"
+                  placeholder="{{ editTags().length ? '' : 'Add tags...' }}"
+                  (keydown)="onEditTagKeydown($event)"
+                  class="flex-1 min-w-20 bg-transparent text-sm text-text-primary placeholder-text-secondary outline-none" />
+              </div>
+
               <div class="grid grid-cols-2 gap-2">
                 <input type="text" [(ngModel)]="editForm.machine_brand" name="edit-machine"
                   placeholder="Machine" class="w-full bg-background rounded-xl px-3 py-2 text-xs text-text-primary placeholder-text-secondary outline-none border border-transparent focus:border-primary transition-colors" />
@@ -123,51 +283,51 @@
 
           } @else {
 
-            <div>
-              <h2 class="font-semibold text-text-primary mb-1">{{ post.title }}</h2>
-              <p class="text-text-secondary text-sm leading-relaxed whitespace-pre-wrap">{{ post.description }}</p>
+            <div class="flex gap-3 min-w-0">
+
+              @if (post.image_url) {
+                <div class="w-36 h-28 shrink-0 rounded-xl overflow-hidden">
+                  <img [src]="post.image_url" [alt]="post.title" class="w-full h-full object-cover" />
+                </div>
+              }
+
+              <div class="flex-1 flex flex-col gap-2 min-w-0">
+                <div>
+                  <h2 class="font-semibold text-text-primary mb-1">{{ post.title }}</h2>
+                  <p class="text-text-secondary text-sm leading-relaxed whitespace-pre-wrap line-clamp-3">{{ post.description }}</p>
+                </div>
+
+                @if (post.tags.length) {
+                  <div class="flex flex-wrap gap-1.5">
+                    @for (tag of post.tags; track tag) {
+                      <span class="bg-primary text-white text-xs font-medium px-2.5 py-0.5 rounded-full">#{{ tag }}</span>
+                    }
+                  </div>
+                }
+
+                @if (post.user_id === currentUserId()?.id) {
+                  <div class="flex gap-2 pt-2 border-t border-background mt-auto">
+                    <button (click)="startEdit(post)"
+                      class="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl bg-background text-text-secondary hover:text-primary hover:bg-primary-soft transition-colors">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      Edit
+                    </button>
+                    <button (click)="deletePost(post.id)"
+                      class="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl bg-background text-text-secondary hover:text-danger hover:bg-danger/10 transition-colors">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Delete
+                    </button>
+                  </div>
+                }
+              </div>
+
             </div>
-
-            @if (post.machine_brand || post.grinder_brand || post.coffee_brand || post.bean_type || post.water_temp) {
-              <div class="flex flex-wrap gap-2">
-                @if (post.machine_brand) {
-                  <span class="bg-background text-primary text-xs px-2.5 py-1 rounded-full">{{ post.machine_brand }}</span>
-                }
-                @if (post.grinder_brand) {
-                  <span class="bg-background text-primary text-xs px-2.5 py-1 rounded-full">{{ post.grinder_brand }}</span>
-                }
-                @if (post.coffee_brand) {
-                  <span class="bg-background text-primary text-xs px-2.5 py-1 rounded-full">{{ post.coffee_brand }}</span>
-                }
-                @if (post.bean_type) {
-                  <span class="bg-background text-primary text-xs px-2.5 py-1 rounded-full">{{ post.bean_type }}</span>
-                }
-                @if (post.water_temp) {
-                  <span class="bg-background text-primary text-xs px-2.5 py-1 rounded-full">{{ post.water_temp }}°C</span>
-                }
-              </div>
-            }
-
-            @if (post.user_id === currentUserId()?.id) {
-              <div class="flex gap-2 pt-2 border-t border-background">
-                <button (click)="startEdit(post)"
-                  class="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl bg-background text-text-secondary hover:text-primary hover:bg-primary-soft transition-colors">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  Edit
-                </button>
-                <button (click)="deletePost(post.id)"
-                  class="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl bg-background text-text-secondary hover:text-danger hover:bg-danger/10 transition-colors">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  Delete
-                </button>
-              </div>
-            }
 
           }
 

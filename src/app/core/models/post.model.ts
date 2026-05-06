@@ -8,6 +8,9 @@ export interface Post {
   coffee_brand: string | null;
   bean_type: string | null;
   water_temp: number | null;
+  image_url: string | null;
+  tags: string[];
+  status: 'draft' | 'published';
   created_at: string;
   profiles?: {
     username: string;
