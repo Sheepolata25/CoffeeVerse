@@ -6,6 +6,7 @@ import { ProfileService } from '../../core/services/profile.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PostService } from '../../core/services/post.service';
 import { StorageService } from '../../core/services/storage.service';
+import { FollowService } from '../../core/services/follow.service';
 
 type Tab = 'overview' | 'settings';
 
@@ -33,6 +34,7 @@ export class ProfilePage {
   private auth = inject(AuthService);
   private postService = inject(PostService);
   private storage = inject(StorageService);
+  followService = inject(FollowService);
 
   profile = this.profileService.profile;
   activeTab = signal<Tab>('overview');
@@ -102,6 +104,7 @@ export class ProfilePage {
       const userId = this.auth.currentUser()?.id;
       if (userId) {
         this.postService.loadPosts();
+        this.followService.loadMyFollowCounts();
       }
     });
   }

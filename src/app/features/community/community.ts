@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, inject, OnInit, signal, computed, ChangeDetectorRef } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -6,6 +6,7 @@ import { PostService } from '../../core/services/post.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ProfileService } from '../../core/services/profile.service';
 import { CommentService } from '../../core/services/comment.service';
+import { FollowService } from '../../core/services/follow.service';
 import { Post } from '../../core/models/post.model';
 import { PostComment } from '../../core/models/comment.model';
 
@@ -20,12 +21,13 @@ export class Community implements OnInit {
   private auth = inject(AuthService);
   private profileService = inject(ProfileService);
   private commentService = inject(CommentService);
+  private cdr = inject(ChangeDetectorRef);
+  followService = inject(FollowService);
 
   posts = this.postService.posts;
   profile = this.profileService.profile;
   currentUserId = this.auth.currentUser;
 
-  allTags = signal<string[]>([]);
   selectedTag = signal<string | null>(null);
   searchQuery = signal('');
 
@@ -35,6 +37,18 @@ export class Community implements OnInit {
   commentTexts: Record<string, string> = {};
   submittingComment: Record<string, boolean> = {};
 
+  popularTags = computed(() => {
+    const counts = new Map<string, number>();
+    for (const post of this.posts()) {
+      for (const tag of post.tags ?? []) {
+        counts.set(tag, (counts.get(tag) ?? 0) + 1);
+      }
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8);
+  });
+
   filteredPosts = computed(() => {
     const tag = this.selectedTag();
     const query = this.searchQuery().toLowerCase().trim();
@@ -43,14 +57,15 @@ export class Community implements OnInit {
     if (query) result = result.filter(p =>
       p.title.toLowerCase().includes(query) ||
       p.description.toLowerCase().includes(query) ||
-      (p.profiles?.username.toLowerCase().includes(query) ?? false)
+      (p.profiles?.username.toLowerCase().includes(query) ?? false) ||
+      p.tags.some(t => t.toLowerCase().includes(query))
     );
     return result;
   });
 
   async ngOnInit() {
     await this.postService.loadPosts();
-    this.allTags.set(await this.postService.loadAllTags());
+    this.followService.loadFollowingList();
   }
 
   selectTag(tag: string) {
@@ -93,6 +108,7 @@ export class Community implements OnInit {
       this.loadingComments[postId] = true;
       this.commentsMap[postId] = await this.commentService.loadComments(postId);
       this.loadingComments[postId] = false;
+      this.cdr.markForCheck();
     }
   }
 

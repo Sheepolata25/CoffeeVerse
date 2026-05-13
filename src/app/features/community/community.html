@@ -218,27 +218,52 @@
       </svg>
     </a>
 
-    <!-- Filter by tag -->
+    <!-- Popular topics -->
     <div class="card">
-      <h3 class="font-semibold text-text-primary mb-3">Filter by tag</h3>
-      @if (allTags().length) {
-        <div class="flex flex-wrap gap-1.5">
-          @for (tag of allTags(); track tag) {
-            <button (click)="selectTag(tag)"
-              class="text-xs font-medium px-2.5 py-1 rounded-full transition-colors"
-              [class]="selectedTag() === tag ? 'bg-primary text-white' : 'bg-background text-text-secondary hover:bg-primary-soft hover:text-primary'">
-              #{{ tag }}
+      <h3 class="font-semibold text-primary mb-3">Popular topics</h3>
+      @if (popularTags().length) {
+        <div class="flex flex-col gap-1">
+          @for (entry of popularTags(); track entry[0]) {
+            <button (click)="selectTag(entry[0])"
+              class="flex items-center justify-between px-2 py-1.5 rounded-xl transition-colors text-sm"
+              [class]="selectedTag() === entry[0] ? 'bg-primary text-white' : 'hover:bg-primary-soft hover:text-primary text-text-primary'">
+              <span class="font-medium">#{{ entry[0] }}</span>
+              <span class="text-xs"
+                [class]="selectedTag() === entry[0] ? 'text-white/70' : 'text-text-secondary'">
+                {{ entry[1] }} {{ entry[1] === 1 ? 'post' : 'posts' }}
+              </span>
             </button>
           }
         </div>
-        @if (selectedTag()) {
-          <button (click)="selectedTag.set(null)"
-            class="mt-3 text-xs text-text-secondary hover:text-primary transition-colors">
-            Clear filter ×
-          </button>
-        }
       } @else {
-        <p class="text-xs text-text-secondary">No tags yet.</p>
+        <p class="text-xs text-text-secondary">No topics yet.</p>
+      }
+    </div>
+
+    <!-- People you follow -->
+    <div class="card">
+      <h3 class="font-semibold text-primary mb-3">People you follow</h3>
+      @if (followService.followingList().length) {
+        <div class="flex flex-col gap-2">
+          @for (user of followService.followingList(); track user.id) {
+            <a [routerLink]="['/profile', user.id]"
+              class="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-primary-soft transition-colors group">
+              <div class="w-8 h-8 rounded-full bg-primary-soft flex items-center justify-center shrink-0 overflow-hidden">
+                @if (user.avatar_url) {
+                  <img [src]="user.avatar_url" [alt]="user.username" class="w-full h-full object-cover" />
+                } @else {
+                  <svg class="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                }
+              </div>
+              <span class="text-sm font-medium text-text-primary group-hover:text-primary truncate transition-colors">{{ user.username }}</span>
+            </a>
+          }
+        </div>
+      } @else {
+        <p class="text-xs text-text-secondary">You're not following anyone yet.</p>
       }
     </div>
 
