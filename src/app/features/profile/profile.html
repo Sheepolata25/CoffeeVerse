@@ -77,14 +77,6 @@
       @if (activeTab() === 'overview') {
         <div class="p-6 flex flex-col gap-6 overflow-y-auto flex-1">
 
-          @if (profile()?.bio) {
-            <div>
-              <svg class="w-7 h-7 text-primary opacity-25 mb-2" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
-              </svg>
-              <p class="text-text-primary leading-relaxed">{{ profile()?.bio }}</p>
-            </div>
-          }
 
           @if (hasCoffeePrefs()) {
             <div class="border-t border-background pt-6">
@@ -136,7 +128,7 @@
                 @for (post of recentPosts(); track post.id) {
                   <div class="bg-primary-soft rounded-2xl p-4 flex gap-3 min-w-0">
                     @if (post.image_url) {
-                      <div class="w-36 h-28 shrink-0 rounded-xl overflow-hidden">
+                      <div class="w-36 h-36 shrink-0 rounded-xl overflow-hidden">
                         <img [src]="post.image_url" [alt]="post.title" class="w-full h-full object-cover" />
                       </div>
                     }
@@ -160,7 +152,7 @@
             </div>
           }
 
-          @if (!profile()?.bio && !hasCoffeePrefs() && recentPosts().length === 0) {
+          @if (!hasCoffeePrefs() && recentPosts().length === 0) {
             <p class="text-text-secondary text-sm text-center py-8">
               Fill in your profile to show your coffee story!
             </p>
