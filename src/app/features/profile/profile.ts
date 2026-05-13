@@ -6,7 +6,6 @@ import { ProfileService } from '../../core/services/profile.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PostService } from '../../core/services/post.service';
 import { StorageService } from '../../core/services/storage.service';
-import { Post } from '../../core/models/post.model';
 
 type Tab = 'overview' | 'settings';
 
@@ -37,7 +36,6 @@ export class ProfilePage {
 
   profile = this.profileService.profile;
   activeTab = signal<Tab>('overview');
-  userPosts = signal<Post[]>([]);
   saving = signal(false);
   success = signal(false);
   error = signal<string | null>(null);
@@ -60,9 +58,18 @@ export class ProfilePage {
     preferred_water_temp: null,
   };
 
+  userPosts = computed(() => {
+    const userId = this.auth.currentUser()?.id;
+    if (!userId) return [];
+    return this.postService.posts().filter(p => p.user_id === userId);
+  });
+
   recentPosts = computed(() => this.userPosts().slice(0, 3));
   postCount = computed(() => this.userPosts().length);
   latestPost = computed(() => this.userPosts()[0] ?? null);
+  likesReceived = computed(() =>
+    this.userPosts().reduce((total, post) => total + (post.post_likes?.length ?? 0), 0)
+  );
   hasCoffeePrefs = computed(() => {
     const p = this.profile();
     return !!(p?.favorite_brew || p?.goto_bean || p?.preferred_roast || p?.favorite_gear || p?.preferred_water_temp);
@@ -94,7 +101,7 @@ export class ProfilePage {
     effect(() => {
       const userId = this.auth.currentUser()?.id;
       if (userId) {
-        this.postService.loadUserPosts(userId).then(posts => this.userPosts.set(posts));
+        this.postService.loadPosts();
       }
     });
   }

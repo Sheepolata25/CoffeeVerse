@@ -5,6 +5,8 @@ import { SupabaseService } from './supabase.service';
 
 type PostFields = Pick<Post, 'title' | 'description' | 'image_url' | 'machine_brand' | 'grinder_brand' | 'coffee_brand' | 'bean_type' | 'water_temp' | 'tags'>;
 
+const FULL_SELECT = '*, profiles(username, avatar_url), post_likes(user_id), post_favorites(user_id), post_comments(id)';
+
 @Injectable({ providedIn: 'root' })
 export class PostService {
   private supabase = inject(SupabaseService);
@@ -15,7 +17,7 @@ export class PostService {
   async loadPosts() {
     const { data } = await this.supabase.client
       .from('posts')
-      .select('*, profiles(username, avatar_url)')
+      .select(FULL_SELECT)
       .eq('status', 'published')
       .order('created_at', { ascending: false });
 
@@ -29,7 +31,7 @@ export class PostService {
     const { data, error } = await this.supabase.client
       .from('posts')
       .insert({ ...post, user_id: userId, status })
-      .select('*, profiles(username, avatar_url)')
+      .select(FULL_SELECT)
       .single();
 
     if (!error && data && status === 'published') {
@@ -44,11 +46,13 @@ export class PostService {
       .from('posts')
       .update(updates)
       .eq('id', id)
-      .select('*, profiles(username, avatar_url)')
+      .select(FULL_SELECT)
       .single();
 
     if (!error && data) {
-      this.posts.update(posts => posts.map(p => p.id === id ? data as Post : p));
+      this.posts.update(posts => posts.map(p =>
+        p.id === id ? { ...(data as Post), post_likes: p.post_likes, post_favorites: p.post_favorites, post_comments: p.post_comments } : p
+      ));
     }
 
     return { error };
@@ -59,20 +63,96 @@ export class PostService {
       .from('posts')
       .update({ status: 'published' })
       .eq('id', id)
-      .select('*, profiles(username, avatar_url)')
+      .select(FULL_SELECT)
       .single();
 
     if (!error && data) {
       this.posts.update(posts => [data as Post, ...posts]);
     }
 
-    return { error };
+    return { data, error };
+  }
+
+  async likePost(postId: string) {
+    const userId = this.auth.currentUser()?.id;
+    if (!userId) return;
+
+    const { error } = await this.supabase.client
+      .from('post_likes')
+      .insert({ post_id: postId, user_id: userId });
+
+    if (!error) {
+      this.posts.update(posts => posts.map(p =>
+        p.id === postId ? { ...p, post_likes: [...(p.post_likes ?? []), { user_id: userId }] } : p
+      ));
+    }
+  }
+
+  async unlikePost(postId: string) {
+    const userId = this.auth.currentUser()?.id;
+    if (!userId) return;
+
+    const { error } = await this.supabase.client
+      .from('post_likes')
+      .delete()
+      .eq('post_id', postId)
+      .eq('user_id', userId);
+
+    if (!error) {
+      this.posts.update(posts => posts.map(p =>
+        p.id === postId ? { ...p, post_likes: (p.post_likes ?? []).filter(l => l.user_id !== userId) } : p
+      ));
+    }
+  }
+
+  async favoritePost(postId: string) {
+    const userId = this.auth.currentUser()?.id;
+    if (!userId) return;
+
+    const { error } = await this.supabase.client
+      .from('post_favorites')
+      .insert({ post_id: postId, user_id: userId });
+
+    if (!error) {
+      this.posts.update(posts => posts.map(p =>
+        p.id === postId ? { ...p, post_favorites: [...(p.post_favorites ?? []), { user_id: userId }] } : p
+      ));
+    }
+  }
+
+  async unfavoritePost(postId: string) {
+    const userId = this.auth.currentUser()?.id;
+    if (!userId) return;
+
+    const { error } = await this.supabase.client
+      .from('post_favorites')
+      .delete()
+      .eq('post_id', postId)
+      .eq('user_id', userId);
+
+    if (!error) {
+      this.posts.update(posts => posts.map(p =>
+        p.id === postId ? { ...p, post_favorites: (p.post_favorites ?? []).filter(f => f.user_id !== userId) } : p
+      ));
+    }
+  }
+
+  incrementCommentCount(postId: string) {
+    this.posts.update(posts => posts.map(p =>
+      p.id === postId ? { ...p, post_comments: [...(p.post_comments ?? []), { id: 'tmp' }] } : p
+    ));
+  }
+
+  decrementCommentCount(postId: string) {
+    this.posts.update(posts => posts.map(p =>
+      p.id === postId ? { ...p, post_comments: (p.post_comments ?? []).slice(0, -1) } : p
+    ));
   }
 
   async loadUserPosts(userId: string): Promise<Post[]> {
     const { data } = await this.supabase.client
       .from('posts')
-      .select('*, profiles(username, avatar_url)')
+      .select(FULL_SELECT)
       .eq('user_id', userId)
       .eq('status', 'published')
       .order('created_at', { ascending: false });

@@ -37,8 +37,7 @@ export class Posts implements OnInit {
   private auth = inject(AuthService);
   private storage = inject(StorageService);
 
-  posts = this.postService.posts;
-  currentUserId = this.auth.currentUser;
+  myPosts = signal<Post[]>([]);
 
   submitting = signal(false);
   savingDraft = signal(false);
@@ -53,30 +52,30 @@ export class Posts implements OnInit {
   form: PostForm = emptyForm();
   editForm: PostForm = emptyForm();
 
-  // Image for the create/draft form
   imageFile: File | null = null;
   imagePreview = signal<string | null>(null);
 
-  // Tags for the create/draft form
   formTags = signal<string[]>([]);
   formTagInput = '';
   allTags = signal<string[]>([]);
   showSuggestions = signal(false);
 
-  // Image for the inline post edit form
   editImageFile: File | null = null;
   editImagePreview = signal<string | null>(null);
 
-  // Tags for the inline post edit form
   editTags = signal<string[]>([]);
   editTagInput = '';
 
   async ngOnInit() {
-    await this.postService.loadPosts();
     this.allTags.set(await this.postService.loadAllTags());
     const userId = this.auth.currentUser()?.id;
     if (userId) {
-      this.drafts.set(await this.postService.loadUserDrafts(userId));
+      const [posts, drafts] = await Promise.all([
+        this.postService.loadUserPosts(userId),
+        this.postService.loadUserDrafts(userId),
+      ]);
+      this.myPosts.set(posts);
+      this.drafts.set(drafts);
     }
   }
 
@@ -218,12 +217,14 @@ export class Posts implements OnInit {
 
       if (draftId) {
         await this.postService.updatePost(draftId, this.buildFields(imageUrl ?? this.imagePreview()));
-        const { error } = await this.postService.publishDraft(draftId);
+        const { data, error } = await this.postService.publishDraft(draftId);
         if (error) { this.error.set(error.message); return; }
         this.drafts.update(drafts => drafts.filter(d => d.id !== draftId));
+        if (data) this.myPosts.update(posts => [data as Post, ...posts]);
       } else {
-        const { error } = await this.postService.createPost(this.buildFields(imageUrl), 'published');
+        const { data, error } = await this.postService.createPost(this.buildFields(imageUrl), 'published');
         if (error) { this.error.set(error.message); return; }
+        if (data) this.myPosts.update(posts => [data as Post, ...posts]);
       }
 
       this.resetForm();
@@ -265,8 +266,11 @@ export class Posts implements OnInit {
   }
 
   async publishDraft(draft: Post) {
-    const { error } = await this.postService.publishDraft(draft.id);
-    if (!error) this.drafts.update(drafts => drafts.filter(d => d.id !== draft.id));
+    const { data, error } = await this.postService.publishDraft(draft.id);
+    if (!error) {
+      this.drafts.update(drafts => drafts.filter(d => d.id !== draft.id));
+      if (data) this.myPosts.update(posts => [data as Post, ...posts]);
+    }
   }
 
   async deleteDraft(id: string) {
@@ -325,7 +329,7 @@ export class Posts implements OnInit {
       imageUrl = url;
     }
 
-    await this.postService.updatePost(postId, {
+    const updates = {
       title: this.editForm.title.trim(),
       description: this.editForm.description.trim(),
       image_url: imageUrl,
@@ -335,7 +339,10 @@ export class Posts implements OnInit {
       bean_type: this.editForm.bean_type.trim() || null,
       water_temp: this.editForm.water_temp,
       tags: this.editTags(),
-    });
+    };
+
+    await this.postService.updatePost(postId, updates);
+    this.myPosts.update(posts => posts.map(p => p.id === postId ? { ...p, ...updates } : p));
 
     this.editSaving.set(false);
     this.editingPostId.set(null);
@@ -345,5 +352,6 @@ export class Posts implements OnInit {
 
   async deletePost(id: string) {
     await this.postService.deletePost(id);
+    this.myPosts.update(posts => posts.filter(p => p.id !== id));
   }
 }

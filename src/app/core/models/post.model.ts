@@ -16,4 +16,7 @@ export interface Post {
     username: string;
     avatar_url: string | null;
   };
+  post_likes?: { user_id: string }[];
+  post_favorites?: { user_id: string }[];
+  post_comments?: { id: string }[];
 }
