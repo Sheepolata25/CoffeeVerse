@@ -8,9 +8,15 @@ export interface Post {
   coffee_brand: string | null;
   bean_type: string | null;
   water_temp: number | null;
+  image_url: string | null;
+  tags: string[];
+  status: 'draft' | 'published';
   created_at: string;
   profiles?: {
     username: string;
     avatar_url: string | null;
   };
+  post_likes?: { user_id: string }[];
+  post_favorites?: { user_id: string }[];
+  post_comments?: { id: string }[];
 }

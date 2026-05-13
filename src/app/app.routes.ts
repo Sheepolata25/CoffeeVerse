@@ -19,7 +19,9 @@ export const routes: Routes = [
     children: [
       { path: '', component: Home },
       { path: 'posts', loadComponent: () => import('./features/posts/posts').then(m => m.Posts) },
+      { path: 'community', loadComponent: () => import('./features/community/community').then(m => m.Community) },
       { path: 'profile', loadComponent: () => import('./features/profile/profile').then(m => m.ProfilePage) },
+      { path: 'profile/:id', loadComponent: () => import('./features/public-profile/public-profile').then(m => m.PublicProfile) },
     ],
   },
   {

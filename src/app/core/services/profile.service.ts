@@ -21,6 +21,15 @@ export class ProfileService {
     });
   }
 
+  async loadProfileById(userId: string): Promise<Profile | null> {
+    const { data } = await this.supabase.client
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    return data;
+  }
+
   async loadProfile() {
     const userId = this.auth.currentUser()?.id;
     if (!userId) return;
