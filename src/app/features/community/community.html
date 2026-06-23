@@ -265,7 +265,7 @@
 
     <!-- Popular topics -->
     <div class="card">
-      <h3 class="font-semibold text-primary mb-3">Popular topics</h3>
+      <h3 class="font-semibold text-text-primary mb-3">Popular topics</h3>
       @if (popularTags().length) {
         <div class="flex flex-col gap-1">
           @for (entry of popularTags(); track entry[0]) {
@@ -287,7 +287,7 @@
 
     <!-- People you follow -->
     <div class="card">
-      <h3 class="font-semibold text-primary mb-3">People you follow</h3>
+      <h3 class="font-semibold text-text-primary mb-3">People you follow</h3>
       @if (followService.followingList().length) {
         <div class="flex flex-col gap-2">
           @for (user of followService.followingList(); track user.id) {

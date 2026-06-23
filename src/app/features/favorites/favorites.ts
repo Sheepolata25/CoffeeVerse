@@ -10,6 +10,10 @@ import { CollectionService } from '../../core/services/collection.service';
 import { Post } from '../../core/models/post.model';
 import { PostComment } from '../../core/models/comment.model';
 
+type SortBy = 'recent_saved' | 'most_liked';
+
+const COLLECTIONS_LIMIT = 5;
+
 @Component({
   selector: 'app-favorites',
   imports: [DatePipe, RouterLink, FormsModule],
@@ -30,6 +34,9 @@ export class Favorites implements OnInit {
   searchQuery = signal('');
   selectedTag = signal<string | null>(null);
   selectedCollectionId = signal<string | null | 'all'>('all');
+  showAllCollections = signal(false);
+  sortBy = signal<SortBy>('recent_saved');
+  showSortDropdown = signal(false);
 
   showNewCollectionInput = signal(false);
   newCollectionName = '';
@@ -40,6 +47,25 @@ export class Favorites implements OnInit {
   loadingComments: Record<string, boolean> = {};
   commentTexts: Record<string, string> = {};
   submittingComment: Record<string, boolean> = {};
+
+  hasMoreCollections = computed(() =>
+    this.collectionService.collections().length > COLLECTIONS_LIMIT
+  );
+
+  displayedCollections = computed(() => {
+    const all = this.collectionService.collections();
+    return this.showAllCollections() ? all : all.slice(0, COLLECTIONS_LIMIT);
+  });
+
+  collectionPostCounts = computed(() => {
+    const userId = this.currentUser()?.id;
+    const counts = new Map<string, number>();
+    for (const post of this.favoritedPosts()) {
+      const colId = post.post_favorites?.find(f => f.user_id === userId)?.collection_id;
+      if (colId) counts.set(colId, (counts.get(colId) ?? 0) + 1);
+    }
+    return counts;
+  });
 
   favoriteTags = computed(() => {
     const counts = new Map<string, number>();
@@ -56,8 +82,9 @@ export class Favorites implements OnInit {
     const tag = this.selectedTag();
     const query = this.searchQuery().toLowerCase().trim();
     const userId = this.currentUser()?.id;
+    const sort = this.sortBy();
 
-    let result = this.favoritedPosts();
+    let result = [...this.favoritedPosts()];
 
     if (colId !== 'all' && userId) {
       result = result.filter(p =>
@@ -71,6 +98,12 @@ export class Favorites implements OnInit {
       (p.profiles?.username.toLowerCase().includes(query) ?? false) ||
       p.tags.some(t => t.toLowerCase().includes(query))
     );
+
+    if (sort === 'most_liked') {
+      result.sort((a, b) => (b.post_likes?.length ?? 0) - (a.post_likes?.length ?? 0));
+    }
+    // 'recent_saved' keeps the default order from the DB (most recently saved first)
+
     return result;
   });
 
@@ -91,6 +124,16 @@ export class Favorites implements OnInit {
 
   selectTag(tag: string) {
     this.selectedTag.set(this.selectedTag() === tag ? null : tag);
+    this.selectedCollectionId.set('all');
+  }
+
+  setSortBy(sort: SortBy) {
+    this.sortBy.set(sort);
+    this.showSortDropdown.set(false);
+  }
+
+  sortLabel(): string {
+    return this.sortBy() === 'most_liked' ? 'Most liked' : 'Recently saved';
   }
 
   getPostCollectionId(post: Post): string | null {

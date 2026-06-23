@@ -77,8 +77,9 @@ export class PostService {
   async loadFavoritedPosts(userId: string) {
     const { data } = await this.supabase.client
       .from('post_favorites')
-      .select(`posts(${FULL_SELECT})`)
-      .eq('user_id', userId);
+      .select(`collection_id, posts(${FULL_SELECT})`)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
 
     const posts = ((data ?? []) as any[]).map(d => d.posts).filter(Boolean) as Post[];
     this.favoritedPosts.set(posts);
