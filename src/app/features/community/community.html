@@ -11,7 +11,7 @@
       </svg>
       <input type="text" placeholder="Search posts, users, tags..."
         [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
-        class="bg-transparent outline-none flex-1 placeholder-text-secondary text-text-primary text-sm" />
+        class="bg-transparent outline-none flex-1 placeholder-text-secondary text-text-primary" />
       @if (searchQuery()) {
         <button (click)="searchQuery.set('')" class="text-text-secondary hover:text-text-primary transition-colors">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
