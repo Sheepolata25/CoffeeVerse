@@ -13,6 +13,7 @@ export class PostService {
   private auth = inject(AuthService);
 
   posts = signal<Post[]>([]);
+  favoritedPosts = signal<Post[]>([]);
 
   async loadPosts() {
     const { data } = await this.supabase.client
@@ -73,6 +74,16 @@ export class PostService {
     return { data, error };
   }
 
+  async loadFavoritedPosts(userId: string) {
+    const { data } = await this.supabase.client
+      .from('post_favorites')
+      .select(`posts(${FULL_SELECT})`)
+      .eq('user_id', userId);
+
+    const posts = ((data ?? []) as any[]).map(d => d.posts).filter(Boolean) as Post[];
+    this.favoritedPosts.set(posts);
+  }
+
   async likePost(postId: string) {
     const userId = this.auth.currentUser()?.id;
     if (!userId) return;
@@ -82,9 +93,11 @@ export class PostService {
       .insert({ post_id: postId, user_id: userId });
 
     if (!error) {
-      this.posts.update(posts => posts.map(p =>
+      const updater = (posts: Post[]) => posts.map(p =>
         p.id === postId ? { ...p, post_likes: [...(p.post_likes ?? []), { user_id: userId }] } : p
-      ));
+      );
+      this.posts.update(updater);
+      this.favoritedPosts.update(updater);
     }
   }
 
@@ -99,9 +112,11 @@ export class PostService {
       .eq('user_id', userId);
 
     if (!error) {
-      this.posts.update(posts => posts.map(p =>
+      const updater = (posts: Post[]) => posts.map(p =>
         p.id === postId ? { ...p, post_likes: (p.post_likes ?? []).filter(l => l.user_id !== userId) } : p
-      ));
+      );
+      this.posts.update(updater);
+      this.favoritedPosts.update(updater);
     }
   }
 
@@ -117,6 +132,10 @@ export class PostService {
       this.posts.update(posts => posts.map(p =>
         p.id === postId ? { ...p, post_favorites: [...(p.post_favorites ?? []), { user_id: userId }] } : p
       ));
+      const post = this.posts().find(p => p.id === postId);
+      if (post && !this.favoritedPosts().some(p => p.id === postId)) {
+        this.favoritedPosts.update(posts => [post, ...posts]);
+      }
     }
   }
 
@@ -134,6 +153,7 @@ export class PostService {
       this.posts.update(posts => posts.map(p =>
         p.id === postId ? { ...p, post_favorites: (p.post_favorites ?? []).filter(f => f.user_id !== userId) } : p
       ));
+      this.favoritedPosts.update(posts => posts.filter(p => p.id !== postId));
     }
   }
 
