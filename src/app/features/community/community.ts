@@ -7,6 +7,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { ProfileService } from '../../core/services/profile.service';
 import { CommentService } from '../../core/services/comment.service';
 import { FollowService } from '../../core/services/follow.service';
+import { CollectionService } from '../../core/services/collection.service';
 import { Post } from '../../core/models/post.model';
 import { PostComment } from '../../core/models/comment.model';
 
@@ -23,6 +24,7 @@ export class Community implements OnInit {
   private commentService = inject(CommentService);
   private cdr = inject(ChangeDetectorRef);
   followService = inject(FollowService);
+  collectionService = inject(CollectionService);
 
   posts = this.postService.posts;
   profile = this.profileService.profile;
@@ -30,6 +32,7 @@ export class Community implements OnInit {
 
   selectedTag = signal<string | null>(null);
   searchQuery = signal('');
+  openDropdownPostId = signal<string | null>(null);
 
   expandedPostId = signal<string | null>(null);
   commentsMap: Record<string, PostComment[]> = {};
@@ -66,6 +69,24 @@ export class Community implements OnInit {
   async ngOnInit() {
     await this.postService.loadPosts();
     this.followService.loadFollowingList();
+    this.collectionService.loadCollections();
+  }
+
+  getPostCollectionId(post: Post): string | null {
+    const userId = this.currentUserId()?.id;
+    return post.post_favorites?.find(f => f.user_id === userId)?.collection_id ?? null;
+  }
+
+  toggleDropdown(postId: string) {
+    this.openDropdownPostId.set(this.openDropdownPostId() === postId ? null : postId);
+  }
+
+  async assignToCollection(post: Post, collectionId: string | null) {
+    const { error } = await this.collectionService.assignToCollection(post.id, collectionId);
+    if (!error) {
+      this.postService.updatePostCollectionLocally(post.id, collectionId);
+    }
+    this.openDropdownPostId.set(null);
   }
 
   selectTag(tag: string) {

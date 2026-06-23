@@ -6,6 +6,7 @@ import { PostService } from '../../core/services/post.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ProfileService } from '../../core/services/profile.service';
 import { CommentService } from '../../core/services/comment.service';
+import { CollectionService } from '../../core/services/collection.service';
 import { Post } from '../../core/models/post.model';
 import { PostComment } from '../../core/models/comment.model';
 
@@ -20,6 +21,7 @@ export class Favorites implements OnInit {
   private profileService = inject(ProfileService);
   private commentService = inject(CommentService);
   private cdr = inject(ChangeDetectorRef);
+  collectionService = inject(CollectionService);
 
   profile = this.profileService.profile;
   currentUser = this.auth.currentUser;
@@ -27,6 +29,11 @@ export class Favorites implements OnInit {
 
   searchQuery = signal('');
   selectedTag = signal<string | null>(null);
+  selectedCollectionId = signal<string | null | 'all'>('all');
+
+  showNewCollectionInput = signal(false);
+  newCollectionName = '';
+  openDropdownPostId = signal<string | null>(null);
 
   expandedPostId = signal<string | null>(null);
   commentsMap: Record<string, PostComment[]> = {};
@@ -45,9 +52,18 @@ export class Favorites implements OnInit {
   });
 
   filteredPosts = computed(() => {
+    const colId = this.selectedCollectionId();
     const tag = this.selectedTag();
     const query = this.searchQuery().toLowerCase().trim();
+    const userId = this.currentUser()?.id;
+
     let result = this.favoritedPosts();
+
+    if (colId !== 'all' && userId) {
+      result = result.filter(p =>
+        p.post_favorites?.find(f => f.user_id === userId)?.collection_id === colId
+      );
+    }
     if (tag) result = result.filter(p => p.tags.includes(tag));
     if (query) result = result.filter(p =>
       p.title.toLowerCase().includes(query) ||
@@ -61,12 +77,52 @@ export class Favorites implements OnInit {
   async ngOnInit() {
     const userId = this.currentUser()?.id;
     if (userId) {
-      await this.postService.loadFavoritedPosts(userId);
+      await Promise.all([
+        this.postService.loadFavoritedPosts(userId),
+        this.collectionService.loadCollections(),
+      ]);
     }
+  }
+
+  selectCollection(id: string | null | 'all') {
+    this.selectedCollectionId.set(id);
+    this.selectedTag.set(null);
   }
 
   selectTag(tag: string) {
     this.selectedTag.set(this.selectedTag() === tag ? null : tag);
+  }
+
+  getPostCollectionId(post: Post): string | null {
+    const userId = this.currentUser()?.id;
+    return post.post_favorites?.find(f => f.user_id === userId)?.collection_id ?? null;
+  }
+
+  toggleDropdown(postId: string) {
+    this.openDropdownPostId.set(this.openDropdownPostId() === postId ? null : postId);
+  }
+
+  async assignToCollection(post: Post, collectionId: string | null) {
+    const { error } = await this.collectionService.assignToCollection(post.id, collectionId);
+    if (!error) {
+      this.postService.updatePostCollectionLocally(post.id, collectionId);
+    }
+    this.openDropdownPostId.set(null);
+  }
+
+  async createCollection() {
+    const name = this.newCollectionName.trim();
+    if (!name) return;
+    await this.collectionService.createCollection(name);
+    this.newCollectionName = '';
+    this.showNewCollectionInput.set(false);
+  }
+
+  async deleteCollection(id: string) {
+    if (this.selectedCollectionId() === id) {
+      this.selectedCollectionId.set('all');
+    }
+    await this.collectionService.deleteCollection(id);
   }
 
   hasLiked(post: Post): boolean {
@@ -103,11 +159,9 @@ export class Favorites implements OnInit {
   async submitComment(postId: string) {
     const text = this.commentTexts[postId]?.trim();
     if (!text || this.submittingComment[postId]) return;
-
     this.submittingComment[postId] = true;
     const { data, error } = await this.commentService.addComment(postId, text);
     this.submittingComment[postId] = false;
-
     if (!error && data) {
       this.commentsMap[postId] = [...(this.commentsMap[postId] ?? []), data];
       this.commentTexts[postId] = '';
