@@ -6,32 +6,40 @@ import { PostService } from '../../core/services/post.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ProfileService } from '../../core/services/profile.service';
 import { CommentService } from '../../core/services/comment.service';
-import { FollowService } from '../../core/services/follow.service';
 import { CollectionService } from '../../core/services/collection.service';
 import { Post } from '../../core/models/post.model';
 import { PostComment } from '../../core/models/comment.model';
 
+type SortBy = 'recent_saved' | 'most_liked';
+
+const COLLECTIONS_LIMIT = 5;
+
 @Component({
-  selector: 'app-community',
+  selector: 'app-favorites',
   imports: [DatePipe, RouterLink, FormsModule],
-  templateUrl: './community.html',
-  styleUrl: './community.css',
+  templateUrl: './favorites.html',
 })
-export class Community implements OnInit {
+export class Favorites implements OnInit {
   private postService = inject(PostService);
   private auth = inject(AuthService);
   private profileService = inject(ProfileService);
   private commentService = inject(CommentService);
   private cdr = inject(ChangeDetectorRef);
-  followService = inject(FollowService);
   collectionService = inject(CollectionService);
 
-  posts = this.postService.posts;
   profile = this.profileService.profile;
-  currentUserId = this.auth.currentUser;
+  currentUser = this.auth.currentUser;
+  favoritedPosts = this.postService.favoritedPosts;
 
-  selectedTag = signal<string | null>(null);
   searchQuery = signal('');
+  selectedTag = signal<string | null>(null);
+  selectedCollectionId = signal<string | null | 'all'>('all');
+  showAllCollections = signal(false);
+  sortBy = signal<SortBy>('recent_saved');
+  showSortDropdown = signal(false);
+
+  showNewCollectionInput = signal(false);
+  newCollectionName = '';
   openDropdownPostId = signal<string | null>(null);
 
   expandedPostId = signal<string | null>(null);
@@ -40,22 +48,49 @@ export class Community implements OnInit {
   commentTexts: Record<string, string> = {};
   submittingComment: Record<string, boolean> = {};
 
-  popularTags = computed(() => {
+  hasMoreCollections = computed(() =>
+    this.collectionService.collections().length > COLLECTIONS_LIMIT
+  );
+
+  displayedCollections = computed(() => {
+    const all = this.collectionService.collections();
+    return this.showAllCollections() ? all : all.slice(0, COLLECTIONS_LIMIT);
+  });
+
+  collectionPostCounts = computed(() => {
+    const userId = this.currentUser()?.id;
     const counts = new Map<string, number>();
-    for (const post of this.posts()) {
+    for (const post of this.favoritedPosts()) {
+      const colId = post.post_favorites?.find(f => f.user_id === userId)?.collection_id;
+      if (colId) counts.set(colId, (counts.get(colId) ?? 0) + 1);
+    }
+    return counts;
+  });
+
+  favoriteTags = computed(() => {
+    const counts = new Map<string, number>();
+    for (const post of this.favoritedPosts()) {
       for (const tag of post.tags ?? []) {
         counts.set(tag, (counts.get(tag) ?? 0) + 1);
       }
     }
-    return [...counts.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 8);
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]);
   });
 
   filteredPosts = computed(() => {
+    const colId = this.selectedCollectionId();
     const tag = this.selectedTag();
     const query = this.searchQuery().toLowerCase().trim();
-    let result = this.posts();
+    const userId = this.currentUser()?.id;
+    const sort = this.sortBy();
+
+    let result = [...this.favoritedPosts()];
+
+    if (colId !== 'all' && userId) {
+      result = result.filter(p =>
+        p.post_favorites?.find(f => f.user_id === userId)?.collection_id === colId
+      );
+    }
     if (tag) result = result.filter(p => p.tags.includes(tag));
     if (query) result = result.filter(p =>
       p.title.toLowerCase().includes(query) ||
@@ -63,17 +98,46 @@ export class Community implements OnInit {
       (p.profiles?.username.toLowerCase().includes(query) ?? false) ||
       p.tags.some(t => t.toLowerCase().includes(query))
     );
+
+    if (sort === 'most_liked') {
+      result.sort((a, b) => (b.post_likes?.length ?? 0) - (a.post_likes?.length ?? 0));
+    }
+    // 'recent_saved' keeps the default order from the DB (most recently saved first)
+
     return result;
   });
 
   async ngOnInit() {
-    await this.postService.loadPosts();
-    this.followService.loadFollowingList();
-    this.collectionService.loadCollections();
+    const userId = this.currentUser()?.id;
+    if (userId) {
+      await Promise.all([
+        this.postService.loadFavoritedPosts(userId),
+        this.collectionService.loadCollections(),
+      ]);
+    }
+  }
+
+  selectCollection(id: string | null | 'all') {
+    this.selectedCollectionId.set(id);
+    this.selectedTag.set(null);
+  }
+
+  selectTag(tag: string) {
+    this.selectedTag.set(this.selectedTag() === tag ? null : tag);
+    this.selectedCollectionId.set('all');
+  }
+
+  setSortBy(sort: SortBy) {
+    this.sortBy.set(sort);
+    this.showSortDropdown.set(false);
+  }
+
+  sortLabel(): string {
+    return this.sortBy() === 'most_liked' ? 'Most liked' : 'Recently saved';
   }
 
   getPostCollectionId(post: Post): string | null {
-    const userId = this.currentUserId()?.id;
+    const userId = this.currentUser()?.id;
     return post.post_favorites?.find(f => f.user_id === userId)?.collection_id ?? null;
   }
 
@@ -89,12 +153,23 @@ export class Community implements OnInit {
     this.openDropdownPostId.set(null);
   }
 
-  selectTag(tag: string) {
-    this.selectedTag.set(this.selectedTag() === tag ? null : tag);
+  async createCollection() {
+    const name = this.newCollectionName.trim();
+    if (!name) return;
+    await this.collectionService.createCollection(name);
+    this.newCollectionName = '';
+    this.showNewCollectionInput.set(false);
+  }
+
+  async deleteCollection(id: string) {
+    if (this.selectedCollectionId() === id) {
+      this.selectedCollectionId.set('all');
+    }
+    await this.collectionService.deleteCollection(id);
   }
 
   hasLiked(post: Post): boolean {
-    const userId = this.currentUserId()?.id;
+    const userId = this.currentUser()?.id;
     return !!userId && (post.post_likes?.some(l => l.user_id === userId) ?? false);
   }
 
@@ -106,17 +181,8 @@ export class Community implements OnInit {
     }
   }
 
-  hasFavorited(post: Post): boolean {
-    const userId = this.currentUserId()?.id;
-    return !!userId && (post.post_favorites?.some(f => f.user_id === userId) ?? false);
-  }
-
   toggleFavorite(post: Post) {
-    if (this.hasFavorited(post)) {
-      this.postService.unfavoritePost(post.id);
-    } else {
-      this.postService.favoritePost(post.id);
-    }
+    this.postService.unfavoritePost(post.id);
   }
 
   async toggleComments(postId: string) {
@@ -136,11 +202,9 @@ export class Community implements OnInit {
   async submitComment(postId: string) {
     const text = this.commentTexts[postId]?.trim();
     if (!text || this.submittingComment[postId]) return;
-
     this.submittingComment[postId] = true;
     const { data, error } = await this.commentService.addComment(postId, text);
     this.submittingComment[postId] = false;
-
     if (!error && data) {
       this.commentsMap[postId] = [...(this.commentsMap[postId] ?? []), data];
       this.commentTexts[postId] = '';

@@ -11,7 +11,7 @@
       </svg>
       <input type="text" placeholder="Search posts, users, tags..."
         [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
-        class="bg-transparent outline-none flex-1 placeholder-text-secondary text-text-primary text-sm" />
+        class="bg-transparent outline-none flex-1 placeholder-text-secondary text-text-primary" />
       @if (searchQuery()) {
         <button (click)="searchQuery.set('')" class="text-text-secondary hover:text-text-primary transition-colors">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -48,7 +48,7 @@
           <!-- Content -->
           <div class="flex gap-3 min-w-0">
             @if (post.image_url) {
-              <div class="w-36 h-28 shrink-0 rounded-xl overflow-hidden">
+              <div class="w-36 h-36 shrink-0 rounded-xl overflow-hidden">
                 <img [src]="post.image_url" [alt]="post.title" class="w-full h-full object-cover" />
               </div>
             }
@@ -93,6 +93,51 @@
               </svg>
               {{ post.post_favorites?.length ?? 0 }}
             </button>
+
+            <!-- Collection assignment (only when saved) -->
+            @if (hasFavorited(post)) {
+              <div class="relative">
+                <button (click)="toggleDropdown(post.id)"
+                  class="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-xl transition-colors"
+                  [class]="getPostCollectionId(post) ? 'text-primary bg-primary/10' : 'text-text-secondary bg-background hover:text-primary hover:bg-primary/10'"
+                  title="Add to collection">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                  @if (getPostCollectionId(post); as colId) {
+                    {{ collectionService.collections().find(c => c.id === colId)?.name ?? 'Collection' }}
+                  } @else {
+                    Add to collection
+                  }
+                </button>
+
+                @if (openDropdownPostId() === post.id) {
+                  <div class="absolute bottom-full mb-1 left-0 z-20 bg-surface rounded-xl shadow-soft border border-border overflow-hidden min-w-44">
+                    <button (click)="assignToCollection(post, null)"
+                      class="w-full text-left px-3 py-2 text-sm transition-colors flex items-center gap-2"
+                      [class]="!getPostCollectionId(post) ? 'text-primary bg-primary/10 font-medium' : 'text-text-secondary hover:bg-primary-soft hover:text-primary'">
+                      <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      No collection
+                    </button>
+                    @if (collectionService.collections().length) {
+                      <div class="border-t border-border"></div>
+                      @for (col of collectionService.collections(); track col.id) {
+                        <button (click)="assignToCollection(post, col.id)"
+                          class="w-full text-left px-3 py-2 text-sm transition-colors"
+                          [class]="getPostCollectionId(post) === col.id ? 'text-primary bg-primary/10 font-medium' : 'text-text-primary hover:bg-primary-soft hover:text-primary'">
+                          {{ col.name }}
+                        </button>
+                      }
+                    } @else {
+                      <p class="px-3 py-2 text-xs text-text-secondary">No collections yet.</p>
+                    }
+                  </div>
+                }
+              </div>
+            }
 
             <!-- Comments toggle -->
             <button (click)="toggleComments(post.id)"
@@ -220,7 +265,7 @@
 
     <!-- Popular topics -->
     <div class="card">
-      <h3 class="font-semibold text-primary mb-3">Popular topics</h3>
+      <h3 class="font-semibold text-text-primary mb-3">Popular topics</h3>
       @if (popularTags().length) {
         <div class="flex flex-col gap-1">
           @for (entry of popularTags(); track entry[0]) {
@@ -242,7 +287,7 @@
 
     <!-- People you follow -->
     <div class="card">
-      <h3 class="font-semibold text-primary mb-3">People you follow</h3>
+      <h3 class="font-semibold text-text-primary mb-3">People you follow</h3>
       @if (followService.followingList().length) {
         <div class="flex flex-col gap-2">
           @for (user of followService.followingList(); track user.id) {

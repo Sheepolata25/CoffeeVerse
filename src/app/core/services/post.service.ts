@@ -5,7 +5,7 @@ import { SupabaseService } from './supabase.service';
 
 type PostFields = Pick<Post, 'title' | 'description' | 'image_url' | 'machine_brand' | 'grinder_brand' | 'coffee_brand' | 'bean_type' | 'water_temp' | 'tags'>;
 
-const FULL_SELECT = '*, profiles(username, avatar_url), post_likes(user_id), post_favorites(user_id), post_comments(id)';
+const FULL_SELECT = '*, profiles(username, avatar_url), post_likes(user_id), post_favorites(user_id, collection_id), post_comments(id)';
 
 @Injectable({ providedIn: 'root' })
 export class PostService {
@@ -13,6 +13,7 @@ export class PostService {
   private auth = inject(AuthService);
 
   posts = signal<Post[]>([]);
+  favoritedPosts = signal<Post[]>([]);
 
   async loadPosts() {
     const { data } = await this.supabase.client
@@ -73,6 +74,17 @@ export class PostService {
     return { data, error };
   }
 
+  async loadFavoritedPosts(userId: string) {
+    const { data } = await this.supabase.client
+      .from('post_favorites')
+      .select(`collection_id, posts(${FULL_SELECT})`)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    const posts = ((data ?? []) as any[]).map(d => d.posts).filter(Boolean) as Post[];
+    this.favoritedPosts.set(posts);
+  }
+
   async likePost(postId: string) {
     const userId = this.auth.currentUser()?.id;
     if (!userId) return;
@@ -82,9 +94,11 @@ export class PostService {
       .insert({ post_id: postId, user_id: userId });
 
     if (!error) {
-      this.posts.update(posts => posts.map(p =>
+      const updater = (posts: Post[]) => posts.map(p =>
         p.id === postId ? { ...p, post_likes: [...(p.post_likes ?? []), { user_id: userId }] } : p
-      ));
+      );
+      this.posts.update(updater);
+      this.favoritedPosts.update(updater);
     }
   }
 
@@ -99,9 +113,11 @@ export class PostService {
       .eq('user_id', userId);
 
     if (!error) {
-      this.posts.update(posts => posts.map(p =>
+      const updater = (posts: Post[]) => posts.map(p =>
         p.id === postId ? { ...p, post_likes: (p.post_likes ?? []).filter(l => l.user_id !== userId) } : p
-      ));
+      );
+      this.posts.update(updater);
+      this.favoritedPosts.update(updater);
     }
   }
 
@@ -115,9 +131,27 @@ export class PostService {
 
     if (!error) {
       this.posts.update(posts => posts.map(p =>
-        p.id === postId ? { ...p, post_favorites: [...(p.post_favorites ?? []), { user_id: userId }] } : p
+        p.id === postId ? { ...p, post_favorites: [...(p.post_favorites ?? []), { user_id: userId, collection_id: null }] } : p
       ));
+      const post = this.posts().find(p => p.id === postId);
+      if (post && !this.favoritedPosts().some(p => p.id === postId)) {
+        this.favoritedPosts.update(posts => [post, ...posts]);
+      }
     }
+  }
+
+  updatePostCollectionLocally(postId: string, collectionId: string | null) {
+    const userId = this.auth.currentUser()?.id;
+    if (!userId) return;
+    const updater = (posts: Post[]) => posts.map(p =>
+      p.id === postId
+        ? { ...p, post_favorites: (p.post_favorites ?? []).map(f =>
+            f.user_id === userId ? { ...f, collection_id: collectionId } : f
+          )}
+        : p
+    );
+    this.posts.update(updater);
+    this.favoritedPosts.update(updater);
   }
 
   async unfavoritePost(postId: string) {
@@ -134,6 +168,7 @@ export class PostService {
       this.posts.update(posts => posts.map(p =>
         p.id === postId ? { ...p, post_favorites: (p.post_favorites ?? []).filter(f => f.user_id !== userId) } : p
       ));
+      this.favoritedPosts.update(posts => posts.filter(p => p.id !== postId));
     }
   }
 
