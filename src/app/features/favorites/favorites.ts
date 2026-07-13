@@ -12,7 +12,7 @@ import { PostComment } from '../../core/models/comment.model';
 
 type SortBy = 'recent_saved' | 'most_liked';
 
-const COLLECTIONS_LIMIT = 5;
+const COLLECTIONS_LIMIT = 4;
 
 @Component({
   selector: 'app-favorites',

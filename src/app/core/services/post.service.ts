@@ -1,5 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Post } from '../models/post.model';
+import { ActivityService } from './activity.service';
 import { AuthService } from './auth.service';
 import { SupabaseService } from './supabase.service';
 
@@ -11,6 +12,7 @@ const FULL_SELECT = '*, profiles(username, avatar_url), post_likes(user_id), pos
 export class PostService {
   private supabase = inject(SupabaseService);
   private auth = inject(AuthService);
+  private activityService = inject(ActivityService);
 
   posts = signal<Post[]>([]);
   favoritedPosts = signal<Post[]>([]);
@@ -36,7 +38,9 @@ export class PostService {
       .single();
 
     if (!error && data && status === 'published') {
-      this.posts.update(posts => [data as Post, ...posts]);
+      const created = data as Post;
+      this.posts.update(posts => [created, ...posts]);
+      void this.activityService.track('post', created.id, created.title);
     }
 
     return { data, error };
@@ -89,6 +93,8 @@ export class PostService {
     const userId = this.auth.currentUser()?.id;
     if (!userId) return;
 
+    const post = this.posts().find(p => p.id === postId) ?? this.favoritedPosts().find(p => p.id === postId);
+
     const { error } = await this.supabase.client
       .from('post_likes')
       .insert({ post_id: postId, user_id: userId });
@@ -99,6 +105,7 @@ export class PostService {
       );
       this.posts.update(updater);
       this.favoritedPosts.update(updater);
+      if (post) void this.activityService.track('like', postId, post.title);
     }
   }
 
@@ -125,6 +132,8 @@ export class PostService {
     const userId = this.auth.currentUser()?.id;
     if (!userId) return;
 
+    const post = this.posts().find(p => p.id === postId);
+
     const { error } = await this.supabase.client
       .from('post_favorites')
       .insert({ post_id: postId, user_id: userId });
@@ -133,10 +142,10 @@ export class PostService {
       this.posts.update(posts => posts.map(p =>
         p.id === postId ? { ...p, post_favorites: [...(p.post_favorites ?? []), { user_id: userId, collection_id: null }] } : p
       ));
-      const post = this.posts().find(p => p.id === postId);
       if (post && !this.favoritedPosts().some(p => p.id === postId)) {
         this.favoritedPosts.update(posts => [post, ...posts]);
       }
+      if (post) void this.activityService.track('favorite', postId, post.title);
     }
   }
 
@@ -225,5 +234,31 @@ export class PostService {
     }
 
     return { error };
+  }
+
+  async loadRecentUserPosts(userId: string, limit = 3): Promise<Post[]> {
+    const { data } = await this.supabase.client
+      .from('posts')
+      .select(FULL_SELECT)
+      .eq('user_id', userId)
+      .eq('status', 'published')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    return (data as Post[]) ?? [];
+  }
+
+  async getUserStats(userId: string): Promise<{ postCount: number; favoriteCount: number }> {
+    const [postsRes, favsRes] = await Promise.all([
+      this.supabase.client
+        .from('posts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('status', 'published'),
+      this.supabase.client
+        .from('post_favorites')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId),
+    ]);
+    return { postCount: postsRes.count ?? 0, favoriteCount: favsRes.count ?? 0 };
   }
 }
