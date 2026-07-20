@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, signal, effect } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -13,7 +13,7 @@ import { Post } from '../../core/models/post.model';
   imports: [DatePipe, RouterLink, FormsModule],
   templateUrl: './home.html',
 })
-export class Home implements OnInit {
+export class Home {
   private profileService = inject(ProfileService);
   private auth = inject(AuthService);
   private postService = inject(PostService);
@@ -28,16 +28,24 @@ export class Home implements OnInit {
   postCount = signal(0);
   favoriteCount = signal(0);
 
-  async ngOnInit() {
-    const userId = this.currentUser()?.id;
-    if (!userId) return;
+  private dataLoaded = false;
 
+  constructor() {
+    effect(() => {
+      const userId = this.currentUser()?.id;
+      if (userId && !this.dataLoaded) {
+        this.dataLoaded = true;
+        this.loadData(userId);
+      }
+    });
+  }
+
+  private async loadData(userId: string) {
     const [posts, stats] = await Promise.all([
       this.postService.loadRecentUserPosts(userId, 3),
       this.postService.getUserStats(userId),
       this.activityService.loadActivities(),
     ]);
-
     this.recentPosts.set(posts);
     this.postCount.set(stats.postCount);
     this.favoriteCount.set(stats.favoriteCount);

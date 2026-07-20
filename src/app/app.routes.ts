@@ -23,6 +23,7 @@ export const routes: Routes = [
       { path: 'profile', loadComponent: () => import('./features/profile/profile').then(m => m.ProfilePage) },
       { path: 'profile/:id', loadComponent: () => import('./features/public-profile/public-profile').then(m => m.PublicProfile) },
       { path: 'favorites', loadComponent: () => import('./features/favorites/favorites').then(m => m.Favorites) },
+      { path: 'map', loadComponent: () => import('./features/map/map').then(m => m.MapPage) },
     ],
   },
   {
