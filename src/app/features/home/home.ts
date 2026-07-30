@@ -45,7 +45,7 @@ export class Home {
 
   private async loadData(userId: string) {
     const [posts, stats] = await Promise.all([
-      this.postService.loadRecentUserPosts(userId, 3),
+      this.postService.loadRecentCommunityPosts(3),
       this.postService.getUserStats(userId),
       this.activityService.loadActivities(),
       this.roasterService.loadDailyRoaster(),

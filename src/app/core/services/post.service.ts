@@ -236,6 +236,16 @@ export class PostService {
     return { error };
   }
 
+  async loadRecentCommunityPosts(limit = 3): Promise<Post[]> {
+    const { data } = await this.supabase.client
+      .from('posts')
+      .select(FULL_SELECT)
+      .eq('status', 'published')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    return (data as Post[]) ?? [];
+  }
+
   async loadRecentUserPosts(userId: string, limit = 3): Promise<Post[]> {
     const { data } = await this.supabase.client
       .from('posts')
