@@ -6,6 +6,7 @@ import { ActivityService } from '../../core/services/activity.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ProfileService } from '../../core/services/profile.service';
 import { PostService } from '../../core/services/post.service';
+import { RoasterService } from '../../core/services/roaster.service';
 import { Post } from '../../core/models/post.model';
 
 @Component({
@@ -18,10 +19,12 @@ export class Home {
   private auth = inject(AuthService);
   private postService = inject(PostService);
   private activityService = inject(ActivityService);
+  private roasterService = inject(RoasterService);
 
   profile = this.profileService.profile;
   currentUser = this.auth.currentUser;
   activities = this.activityService.activities;
+  dailyRoaster = this.roasterService.dailyRoaster;
 
   searchQuery = signal('');
   recentPosts = signal<Post[]>([]);
@@ -45,10 +48,15 @@ export class Home {
       this.postService.loadRecentUserPosts(userId, 3),
       this.postService.getUserStats(userId),
       this.activityService.loadActivities(),
+      this.roasterService.loadDailyRoaster(),
     ]);
     this.recentPosts.set(posts);
     this.postCount.set(stats.postCount);
     this.favoriteCount.set(stats.favoriteCount);
+  }
+
+  locationStr(city: string | null, country: string | null): string {
+    return [city, country].filter(s => !!s).join(', ');
   }
 
   activityLabel(type: string): string {

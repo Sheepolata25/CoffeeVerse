@@ -75,6 +75,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
   async ngAfterViewInit() {
     this.initMap();
+    setTimeout(() => this.map.invalidateSize(), 0);
     await this.roasterService.loadApproved();
     if (this.isAdmin()) await this.roasterService.loadPending();
     this.mapReady.set(true);

@@ -10,6 +10,22 @@ export class RoasterService {
 
   approved = signal<Roaster[]>([]);
   pending = signal<Roaster[]>([]);
+  dailyRoaster = signal<Roaster | null>(null);
+
+  async loadDailyRoaster(): Promise<void> {
+    const { count } = await this.supabase.client
+      .from('roasters')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'approved');
+    if (!count) return;
+    const offset = Math.floor(Date.now() / 86400000) % count;
+    const { data } = await this.supabase.client
+      .from('roasters')
+      .select('*')
+      .eq('status', 'approved')
+      .range(offset, offset);
+    this.dailyRoaster.set((data?.[0] as Roaster) ?? null);
+  }
 
   async loadApproved() {
     const { data } = await this.supabase.client
