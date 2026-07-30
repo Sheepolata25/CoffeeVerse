@@ -1,0 +1,308 @@
+<div class="h-[calc(100vh-2.5rem)] flex gap-4">
+
+  <!-- Sidebar -->
+  <div class="w-80 shrink-0 card flex flex-col overflow-hidden p-0">
+
+    <!-- Sidebar header -->
+    <div class="p-4 border-b border-background shrink-0">
+
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <h2 class="font-semibold text-text-primary">
+            @switch (sidebarView()) {
+              @case ('submit') { Submit a roaster }
+              @case ('admin') { Admin panel }
+              @default {
+                Roasters
+                <span class="text-xs font-normal text-text-secondary">({{ filteredRoasters().length }})</span>
+              }
+            }
+          </h2>
+        </div>
+        <div class="flex items-center gap-2">
+          @if (isAdmin() && sidebarView() !== 'admin') {
+            <button (click)="sidebarView.set('admin')"
+              class="text-xs font-medium px-2 py-1 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
+              Admin
+              @if (pending().length) {
+                <span class="ml-1 bg-primary text-white text-xs rounded-full px-1.5 py-0.5">{{ pending().length }}</span>
+              }
+            </button>
+          }
+          @if (sidebarView() !== 'list') {
+            <button (click)="cancelSubmit(); sidebarView.set('list')"
+              class="text-text-secondary hover:text-text-primary transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          }
+        </div>
+      </div>
+
+      @if (sidebarView() === 'list') {
+        <div class="flex items-center gap-2 bg-surface rounded-xl px-3 py-2">
+          <svg class="w-4 h-4 shrink-0 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input type="text" placeholder="Search by name, city, country…"
+            [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
+            class="bg-transparent outline-none flex-1 text-sm placeholder-text-secondary text-text-primary" />
+        </div>
+      }
+
+    </div>
+
+    <!-- Sidebar content -->
+
+    @if (sidebarView() === 'list') {
+
+      <!-- Submit button — fixed above the list -->
+      <div class="px-4 pb-3 pt-1 border-b border-background shrink-0">
+        <button (click)="startSubmit()"
+          class="w-full flex items-center justify-center gap-2 bg-primary text-white rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-primary/90 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Submit a roaster
+        </button>
+      </div>
+
+      <!-- Scrollable roaster list -->
+      <div class="flex-1 overflow-y-auto">
+        <div class="flex flex-col divide-y divide-background">
+          @for (r of filteredRoasters(); track r.id) {
+            <button (click)="flyTo(r)"
+              class="w-full text-left px-4 py-3 hover:bg-background transition-colors flex flex-col gap-0.5"
+              [class.bg-primary-soft]="selectedRoaster()?.id === r.id">
+              <span class="font-medium text-text-primary text-sm leading-snug">{{ r.name }}</span>
+              @if (r.city || r.country) {
+                <span class="text-xs text-text-secondary">{{ locationStr(r.city, r.country) }}</span>
+              }
+              @if (r.website) {
+                <span class="text-xs text-primary truncate">{{ r.website }}</span>
+              }
+            </button>
+          } @empty {
+            <div class="flex flex-col items-center gap-2 py-12 text-text-secondary">
+              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <p class="text-sm font-medium">No roasters found</p>
+            </div>
+          }
+        </div>
+      </div>
+
+    }
+
+    @if (sidebarView() === 'submit') {
+
+      @if (submitSuccess()) {
+        <div class="flex-1 flex flex-col items-center justify-center gap-4 p-6 text-center">
+          <div class="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+            <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <div>
+            <p class="font-semibold text-text-primary">Submitted!</p>
+            <p class="text-sm text-text-secondary mt-1">It will appear on the map after admin review.</p>
+          </div>
+          <button (click)="cancelSubmit()"
+            class="bg-primary text-white rounded-xl px-4 py-2 text-sm font-medium hover:bg-primary/90 transition-colors">
+            Back to map
+          </button>
+        </div>
+
+      } @else {
+        <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+
+          <!-- Address search -->
+          <div class="flex flex-col gap-1.5">
+            <p class="text-xs font-medium text-text-secondary">Search the location</p>
+            <div class="flex gap-2">
+              <div class="flex-1 flex items-center gap-2 bg-surface rounded-xl px-3 py-2">
+                <svg class="w-3.5 h-3.5 text-text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input type="text" [(ngModel)]="geocodeQuery" placeholder="Address or place name…"
+                  (keydown.enter)="geocodeAddress()"
+                  class="bg-transparent outline-none flex-1 text-sm placeholder-text-secondary text-text-primary" />
+              </div>
+              <button (click)="geocodeAddress()" [disabled]="geocoding() || !geocodeQuery.trim()"
+                class="px-3 py-2 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-40 shrink-0">
+                @if (geocoding()) {
+                  <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                  </svg>
+                } @else {
+                  Go
+                }
+              </button>
+            </div>
+
+            @if (geocodeOpen() && geocodeResults().length) {
+              <div class="flex flex-col bg-surface border border-background rounded-xl overflow-hidden shadow-soft">
+                @for (r of geocodeResults(); track r.place_id) {
+                  <button (click)="selectGeocode(r)"
+                    class="text-left px-3 py-2 text-xs text-text-primary hover:bg-background transition-colors border-b border-background last:border-0 leading-snug">
+                    {{ r.display_name }}
+                  </button>
+                }
+              </div>
+            } @else if (geocodeOpen() && !geocodeResults().length) {
+              <p class="text-xs text-text-secondary px-1">No results found.</p>
+            }
+          </div>
+
+          <!-- Pin status -->
+          @if (newLat() !== null) {
+            <div class="flex items-center gap-2 bg-primary-soft rounded-xl px-3 py-2 text-xs">
+              <svg class="w-3.5 h-3.5 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <span class="text-primary font-medium">Pin placed</span>
+              <span class="text-text-secondary ml-auto">{{ newLat()!.toFixed(3) }}, {{ newLng()!.toFixed(3) }}</span>
+              <button (click)="repositionPin()" class="text-primary hover:underline shrink-0">Move</button>
+            </div>
+          } @else if (!placingPin()) {
+            <button (click)="repositionPin()"
+              class="flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-dashed border-background text-text-secondary text-xs hover:border-primary/40 hover:text-primary transition-colors">
+              <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Or click on the map to place the pin manually
+            </button>
+          } @else {
+            <div class="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-primary/10 text-primary text-xs font-medium">
+              <svg class="w-3.5 h-3.5 animate-pulse shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+              </svg>
+              Click on the map to place the pin…
+            </div>
+          }
+
+          <div class="border-t border-background"></div>
+
+          <!-- Form fields -->
+          <input type="text" [(ngModel)]="newName" placeholder="Roaster name *"
+            class="w-full bg-surface rounded-xl px-3 py-2 text-sm text-text-primary placeholder-text-secondary outline-none focus:ring-1 focus:ring-primary/30" />
+          <input type="text" [(ngModel)]="newCountry" placeholder="Country"
+            class="w-full bg-surface rounded-xl px-3 py-2 text-sm text-text-primary placeholder-text-secondary outline-none focus:ring-1 focus:ring-primary/30" />
+          <input type="text" [(ngModel)]="newCity" placeholder="City"
+            class="w-full bg-surface rounded-xl px-3 py-2 text-sm text-text-primary placeholder-text-secondary outline-none focus:ring-1 focus:ring-primary/30" />
+          <input type="url" [(ngModel)]="newWebsite" placeholder="Website URL"
+            class="w-full bg-surface rounded-xl px-3 py-2 text-sm text-text-primary placeholder-text-secondary outline-none focus:ring-1 focus:ring-primary/30" />
+          <textarea [(ngModel)]="newDescription" placeholder="Description (optional)" rows="3"
+            class="w-full bg-surface rounded-xl px-3 py-2 text-sm text-text-primary placeholder-text-secondary outline-none focus:ring-1 focus:ring-primary/30 resize-none"></textarea>
+
+          @if (submitError()) {
+            <p class="text-xs text-danger">{{ submitError() }}</p>
+          }
+
+          <div class="flex gap-2 mt-auto pt-1">
+            <button (click)="cancelSubmit()"
+              class="flex-1 px-3 py-2 rounded-xl bg-background text-text-secondary text-sm font-medium hover:bg-danger/10 hover:text-danger transition-colors">
+              Cancel
+            </button>
+            <button (click)="submitRoaster()"
+              [disabled]="!newName.trim() || newLat() === null || submitting()"
+              class="flex-1 px-3 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50">
+              {{ submitting() ? 'Submitting…' : 'Submit' }}
+            </button>
+          </div>
+
+        </div>
+      }
+
+    }
+
+    @if (sidebarView() === 'admin') {
+      <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
+
+        <!-- OSM Import -->
+        <div class="flex flex-col gap-2 bg-primary-soft rounded-2xl p-4">
+          <p class="font-medium text-text-primary text-sm">Import from OpenStreetMap</p>
+          <p class="text-xs text-text-secondary">Fetches all tagged coffee roasters from OSM. May take up to 90 seconds.</p>
+          <button (click)="importFromOSM()" [disabled]="importing()"
+            class="flex items-center justify-center gap-2 bg-primary text-white rounded-xl px-3 py-2 text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 mt-1">
+            @if (importing()) {
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
+              Importing…
+            } @else {
+              Import from OSM
+            }
+          </button>
+          @if (importMessage()) {
+            <p class="text-xs text-text-secondary">{{ importMessage() }}</p>
+          }
+        </div>
+
+        <!-- Pending submissions -->
+        <div class="flex flex-col gap-2">
+          <h3 class="font-semibold text-text-primary text-sm">
+            Pending submissions
+            @if (pending().length) {
+              <span class="ml-1 bg-primary text-white text-xs rounded-full px-1.5 py-0.5">{{ pending().length }}</span>
+            }
+          </h3>
+
+          @for (r of pending(); track r.id) {
+            <div class="card p-3 flex flex-col gap-2 rounded-xl">
+              <div>
+                <p class="font-medium text-text-primary text-sm">{{ r.name }}</p>
+                @if (r.city || r.country) {
+                  <p class="text-xs text-text-secondary">{{ locationStr(r.city, r.country) }}</p>
+                }
+                @if (r.website) {
+                  <p class="text-xs text-primary truncate">{{ r.website }}</p>
+                }
+                <p class="text-xs text-text-secondary mt-1">{{ r.created_at | date:'dd MMM yyyy' }}</p>
+              </div>
+              <div class="flex gap-2">
+                <button (click)="reject(r.id)"
+                  class="flex-1 text-xs px-2 py-1.5 rounded-lg bg-danger/10 text-danger hover:bg-danger/20 transition-colors font-medium">
+                  Reject
+                </button>
+                <button (click)="approve(r.id)"
+                  class="flex-1 text-xs px-2 py-1.5 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors font-medium">
+                  Approve
+                </button>
+              </div>
+            </div>
+          } @empty {
+            <p class="text-sm text-text-secondary text-center py-6">No pending submissions.</p>
+          }
+        </div>
+
+      </div>
+    }
+
+  </div>
+
+  <!-- Map -->
+  <div class="flex-1 h-full rounded-2xl overflow-hidden relative">
+
+    <div #mapEl class="w-full h-full" [style.cursor]="placingPin() ? 'crosshair' : ''"></div>
+
+    @if (placingPin()) {
+      <div class="absolute top-3 left-1/2 -translate-x-1/2 z-[2000] pointer-events-none">
+        <div class="bg-primary text-white rounded-xl px-4 py-2 shadow-soft text-sm font-medium whitespace-nowrap">
+          Click on the map to place the pin
+        </div>
+      </div>
+    }
+
+  </div>
+
+</div>

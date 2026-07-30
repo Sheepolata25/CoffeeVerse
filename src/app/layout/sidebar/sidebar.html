@@ -1,7 +1,12 @@
 <div class="w-64 bg-surface h-full shadow-soft flex flex-col p-4 rounded-2xl">
 
-  <div class="text-3xl font-bold mb-8 text-center">
-    <span class="text-text-primary">Coffee</span><span class="text-primary-light">Verse</span>
+  <div class="mb-8 text-center">
+    <div class="text-3xl font-bold">
+      <span class="text-text-primary">Coffee</span><span class="text-primary-light">Verse</span>
+    </div>
+    @if (isAdmin()) {
+      <span class="text-xs font-medium text-primary tracking-wide">Admin version</span>
+    }
   </div>
 
   <nav class="flex flex-col gap-2">
@@ -40,6 +45,15 @@
           d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
       </svg>
       <span>Favorites</span>
+    </a>
+
+    <a routerLink="/map" routerLinkActive="bg-primary-soft text-primary font-medium"
+      class="flex items-center gap-3 p-3 rounded-xl hover:bg-primary-soft text-text-secondary transition-colors">
+      <svg class="w-5 h-5 shrink-0 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+      </svg>
+      <span>Map</span>
     </a>
 
     <a routerLink="/profile" routerLinkActive="bg-primary-soft text-primary font-medium"

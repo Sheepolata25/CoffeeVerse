@@ -11,6 +11,7 @@ export interface Profile {
   preferred_roast: string | null;
   favorite_gear: string | null;
   preferred_water_temp: number | null;
+  is_admin: boolean;
   created_at: string;
   updated_at: string;
 }

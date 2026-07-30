@@ -87,19 +87,19 @@
           </div>
         }
 
-        <div class="grid grid-cols-3 gap-3">
+        <div class="grid grid-cols-6 gap-2">
 
           <!-- All saved card -->
           <button (click)="selectCollection('all')"
-            class="flex flex-col gap-2 p-3 rounded-xl border-2 transition-all text-left"
+            class="aspect-square flex flex-col gap-2 p-3 rounded-xl border-2 transition-all text-left"
             [class]="selectedCollectionId() === 'all' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40 hover:bg-background'">
-            <div class="w-full h-16 rounded-lg bg-primary-soft flex items-center justify-center">
+            <div class="w-full flex-1 rounded-lg bg-primary-soft flex items-center justify-center">
               <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
               </svg>
             </div>
-            <div>
+            <div class="shrink-0">
               <p class="font-semibold text-text-primary text-sm">All saved</p>
               <p class="text-xs text-text-secondary">{{ favoritedPosts().length }} {{ favoritedPosts().length === 1 ? 'post' : 'posts' }}</p>
             </div>
@@ -107,17 +107,17 @@
 
           <!-- User collection cards -->
           @for (col of displayedCollections(); track col.id) {
-            <div class="relative group">
+            <div class="relative group aspect-square">
               <button (click)="selectCollection(col.id)"
-                class="w-full flex flex-col gap-2 p-3 rounded-xl border-2 transition-all text-left"
+                class="w-full h-full flex flex-col gap-2 p-3 rounded-xl border-2 transition-all text-left"
                 [class]="selectedCollectionId() === col.id ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40 hover:bg-background'">
-                <div class="w-full h-16 rounded-lg bg-primary-soft flex items-center justify-center">
+                <div class="w-full flex-1 rounded-lg bg-primary-soft flex items-center justify-center">
                   <svg class="w-6 h-6 text-primary/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
                 </div>
-                <div>
+                <div class="shrink-0">
                   <p class="font-semibold text-text-primary text-sm truncate">{{ col.name }}</p>
                   <p class="text-xs text-text-secondary">{{ collectionPostCounts().get(col.id) ?? 0 }} {{ (collectionPostCounts().get(col.id) ?? 0) === 1 ? 'post' : 'posts' }}</p>
                 </div>
@@ -134,7 +134,7 @@
 
           <!-- Create new collection card -->
           <button (click)="showNewCollectionInput.set(true)"
-            class="flex flex-col items-center justify-center gap-2 p-3 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all min-h-[6rem]">
+            class="aspect-square flex flex-col items-center justify-center gap-2 p-3 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all">
             <svg class="w-6 h-6 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
@@ -378,7 +378,7 @@
     </div>
 
     <!-- Right sidebar: favorite tags -->
-    <div class="w-72 shrink-0 flex flex-col gap-4 overflow-y-auto">
+    <div class="w-72 shrink-0 flex flex-col gap-16 overflow-y-auto pt-8">
 
       <div class="card flex flex-col gap-3">
         <h3 class="font-semibold text-text-primary">Favorite tags</h3> 
