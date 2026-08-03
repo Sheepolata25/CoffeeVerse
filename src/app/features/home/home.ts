@@ -61,10 +61,10 @@ export class Home {
 
   activityLabel(type: string): string {
     const labels: Record<string, string> = {
-      like: 'Vous avez aimé',
-      favorite: 'Vous avez enregistré',
-      comment: 'Vous avez commenté',
-      post: 'Vous avez publié',
+      like: 'You liked',
+      favorite: 'You saved',
+      comment: 'You commented',
+      post: 'You published',
     };
     return labels[type] ?? type;
   }
