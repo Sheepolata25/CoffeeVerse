@@ -10,6 +10,30 @@ export class FollowService {
   myFollowersCount = signal(0);
   myFollowingCount = signal(0);
   followingList = signal<{ id: string; username: string; avatar_url: string | null }[]>([]);
+  blockedUserIds = signal<string[]>([]);
+  blockedUsers = signal<{ id: string; username: string; avatar_url: string | null }[]>([]);
+
+  async loadBlockedUsers() {
+    const userId = this.auth.currentUser()?.id;
+    if (!userId) { this.blockedUserIds.set([]); this.blockedUsers.set([]); return; }
+
+    const { data } = await this.supabase.client
+      .from('blocks')
+      .select('blocked_id')
+      .eq('blocker_id', userId);
+
+    const ids = (data ?? []).map((r: any) => r.blocked_id);
+    this.blockedUserIds.set(ids);
+
+    if (!ids.length) { this.blockedUsers.set([]); return; }
+
+    const { data: profiles } = await this.supabase.client
+      .from('profiles')
+      .select('id, username, avatar_url')
+      .in('id', ids);
+
+    this.blockedUsers.set((profiles ?? []) as { id: string; username: string; avatar_url: string | null }[]);
+  }
 
   async loadFollowingList() {
     const userId = this.auth.currentUser()?.id;
@@ -80,11 +104,14 @@ export class FollowService {
       this.supabase.client.from('blocks').insert({ blocker_id: userId, blocked_id: targetUserId }),
       this.supabase.client.from('follows').delete().eq('follower_id', userId).eq('following_id', targetUserId),
     ]);
+    await this.loadBlockedUsers();
   }
 
   async unblock(targetUserId: string) {
     const userId = this.auth.currentUser()?.id;
     if (!userId) return;
     await this.supabase.client.from('blocks').delete().eq('blocker_id', userId).eq('blocked_id', targetUserId);
+    this.blockedUserIds.update(ids => ids.filter(id => id !== targetUserId));
+    this.blockedUsers.update(users => users.filter(u => u.id !== targetUserId));
   }
 }

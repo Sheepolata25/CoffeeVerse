@@ -1,7 +1,6 @@
 import { Component, inject, signal, effect } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { ActivityService } from '../../core/services/activity.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ProfileService } from '../../core/services/profile.service';
@@ -11,7 +10,7 @@ import { Post } from '../../core/models/post.model';
 
 @Component({
   selector: 'app-home',
-  imports: [DatePipe, RouterLink, FormsModule],
+  imports: [DatePipe, RouterLink],
   templateUrl: './home.html',
 })
 export class Home {
@@ -26,7 +25,6 @@ export class Home {
   activities = this.activityService.activities;
   dailyRoaster = this.roasterService.dailyRoaster;
 
-  searchQuery = signal('');
   recentPosts = signal<Post[]>([]);
   postCount = signal(0);
   favoriteCount = signal(0);

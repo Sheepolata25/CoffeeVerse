@@ -1,4 +1,4 @@
-<div class="flex flex-col gap-4 h-[calc(100vh-2.5rem)]">
+<div class="flex flex-col gap-4 h-[calc(100vh-2rem)]">
 
   <!-- Top bar: search + user info -->
   <div class="flex gap-6 shrink-0">
@@ -175,7 +175,7 @@
           </div>
         </div>
 
-        <div class="flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 pb-2 px-2">
+        <div class="flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 px-2">
 
           @for (post of filteredPosts(); track post.id) {
             <div class="card flex flex-col gap-3 bg-surface shadow-soft p-4 rounded-2xl">
@@ -288,7 +288,7 @@
                 </div>
 
                 <button (click)="toggleComments(post.id)"
-                  class="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-xl transition-colors ml-auto"
+                  class="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-xl transition-colors"
                   [class]="expandedPostId() === post.id ? 'text-primary bg-primary/10' : 'text-text-secondary bg-background hover:text-primary hover:bg-primary/10'">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

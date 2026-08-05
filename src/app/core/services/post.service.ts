@@ -125,6 +125,7 @@ export class PostService {
       );
       this.posts.update(updater);
       this.favoritedPosts.update(updater);
+      void this.activityService.remove('like', postId);
     }
   }
 
@@ -178,6 +179,7 @@ export class PostService {
         p.id === postId ? { ...p, post_favorites: (p.post_favorites ?? []).filter(f => f.user_id !== userId) } : p
       ));
       this.favoritedPosts.update(posts => posts.filter(p => p.id !== postId));
+      void this.activityService.remove('favorite', postId);
     }
   }
 

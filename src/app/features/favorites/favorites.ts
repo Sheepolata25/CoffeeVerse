@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, signal, computed, effect, ChangeDetectorRef } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -19,7 +19,7 @@ const COLLECTIONS_LIMIT = 4;
   imports: [DatePipe, RouterLink, FormsModule],
   templateUrl: './favorites.html',
 })
-export class Favorites implements OnInit {
+export class Favorites {
   private postService = inject(PostService);
   private auth = inject(AuthService);
   private profileService = inject(ProfileService);
@@ -41,6 +41,21 @@ export class Favorites implements OnInit {
   showNewCollectionInput = signal(false);
   newCollectionName = '';
   openDropdownPostId = signal<string | null>(null);
+
+  private dataLoaded = false;
+
+  constructor() {
+    effect(() => {
+      const userId = this.currentUser()?.id;
+      if (userId && !this.dataLoaded) {
+        this.dataLoaded = true;
+        Promise.all([
+          this.postService.loadFavoritedPosts(userId),
+          this.collectionService.loadCollections(),
+        ]);
+      }
+    });
+  }
 
   expandedPostId = signal<string | null>(null);
   commentsMap: Record<string, PostComment[]> = {};
@@ -106,16 +121,6 @@ export class Favorites implements OnInit {
 
     return result;
   });
-
-  async ngOnInit() {
-    const userId = this.currentUser()?.id;
-    if (userId) {
-      await Promise.all([
-        this.postService.loadFavoritedPosts(userId),
-        this.collectionService.loadCollections(),
-      ]);
-    }
-  }
 
   selectCollection(id: string | null | 'all') {
     this.selectedCollectionId.set(id);

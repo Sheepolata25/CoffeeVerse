@@ -55,7 +55,9 @@ export class Community implements OnInit {
   filteredPosts = computed(() => {
     const tag = this.selectedTag();
     const query = this.searchQuery().toLowerCase().trim();
+    const blocked = this.followService.blockedUserIds();
     let result = this.posts();
+    if (blocked.length) result = result.filter(p => !blocked.includes(p.user_id));
     if (tag) result = result.filter(p => p.tags.includes(tag));
     if (query) result = result.filter(p =>
       p.title.toLowerCase().includes(query) ||
@@ -69,6 +71,7 @@ export class Community implements OnInit {
   async ngOnInit() {
     await this.postService.loadPosts();
     this.followService.loadFollowingList();
+    this.followService.loadBlockedUsers();
     this.collectionService.loadCollections();
   }
 
@@ -154,5 +157,9 @@ export class Community implements OnInit {
       this.commentsMap[postId] = this.commentsMap[postId].filter(c => c.id !== commentId);
       this.postService.decrementCommentCount(postId);
     }
+  }
+
+  async unblock(userId: string) {
+    await this.followService.unblock(userId);
   }
 }
