@@ -24,6 +24,7 @@ export class ActivityService {
     this.activities.set((data as Activity[]) ?? []);
   }
 
+  // Appelé lors d'un unlike/unfavorite pour retirer l'activité du feed immédiatement
   async remove(type: Activity['type'], postId: string) {
     const userId = this.auth.currentUser()?.id;
     if (!userId) return;
@@ -42,6 +43,7 @@ export class ActivityService {
     const userId = this.auth.currentUser()?.id;
     if (!userId) return;
 
+    // Suppression avant insertion pour éviter les doublons (ex: like → unlike → re-like)
     await this.supabase.client
       .from('activities')
       .delete()
@@ -55,6 +57,7 @@ export class ActivityService {
       .select('*')
       .single();
 
+    // Mise à jour locale du signal : évite un rechargement complet depuis la base
     if (data) {
       this.activities.update(acts => [
         data as Activity,

@@ -53,6 +53,8 @@ export class CollectionService {
     return { error };
   }
 
+  // Les collections sont un champ de post_favorites.collection_id, pas une table de jonction séparée.
+  // collectionId = null retire le favori de toute collection sans le supprimer des favoris.
   async assignToCollection(postId: string, collectionId: string | null) {
     const userId = this.auth.currentUser()?.id;
     if (!userId) return { error: new Error('Not authenticated') };

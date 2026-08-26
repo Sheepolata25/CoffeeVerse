@@ -45,6 +45,7 @@ export class Favorites {
   private dataLoaded = false;
 
   constructor() {
+    // Même pattern que Home : effect() pour attendre que l'auth soit prête avant de charger les données
     effect(() => {
       const userId = this.currentUser()?.id;
       if (userId && !this.dataLoaded) {

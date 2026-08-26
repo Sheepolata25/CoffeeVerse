@@ -6,6 +6,7 @@ import { SupabaseService } from './supabase.service';
 
 type PostFields = Pick<Post, 'title' | 'description' | 'image_url' | 'machine_brand' | 'grinder_brand' | 'coffee_brand' | 'bean_type' | 'water_temp' | 'tags'>;
 
+// Jointures nécessaires pour afficher auteur, likes, favoris et commentaires en une seule requête
 const FULL_SELECT = '*, profiles(username, avatar_url), post_likes(user_id), post_favorites(user_id, collection_id), post_comments(id)';
 
 @Injectable({ providedIn: 'root' })
@@ -15,6 +16,7 @@ export class PostService {
   private activityService = inject(ActivityService);
 
   posts = signal<Post[]>([]);
+  // Signal séparé de `posts` : les favoris sont chargés indépendamment (page Favoris uniquement)
   favoritedPosts = signal<Post[]>([]);
 
   async loadPosts() {
@@ -79,6 +81,7 @@ export class PostService {
   }
 
   async loadFavoritedPosts(userId: string) {
+    // Jointure inversée : on part de post_favorites pour récupérer les posts avec toutes leurs relations
     const { data } = await this.supabase.client
       .from('post_favorites')
       .select(`collection_id, posts(${FULL_SELECT})`)
@@ -100,6 +103,7 @@ export class PostService {
       .insert({ post_id: postId, user_id: userId });
 
     if (!error) {
+      // Mise à jour optimiste : le signal reflète le like immédiatement sans attendre la base
       const updater = (posts: Post[]) => posts.map(p =>
         p.id === postId ? { ...p, post_likes: [...(p.post_likes ?? []), { user_id: userId }] } : p
       );
@@ -150,6 +154,7 @@ export class PostService {
     }
   }
 
+  // Appliqué dans les deux signaux pour garder Community et Favoris en sync sans rechargement DB
   updatePostCollectionLocally(postId: string, collectionId: string | null) {
     const userId = this.auth.currentUser()?.id;
     if (!userId) return;

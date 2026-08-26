@@ -57,6 +57,7 @@ export class Community implements OnInit {
     const query = this.searchQuery().toLowerCase().trim();
     const blocked = this.followService.blockedUserIds();
     let result = this.posts();
+    // Filtre en premier pour exclure les publications des utilisateurs bloqués
     if (blocked.length) result = result.filter(p => !blocked.includes(p.user_id));
     if (tag) result = result.filter(p => p.tags.includes(tag));
     if (query) result = result.filter(p =>

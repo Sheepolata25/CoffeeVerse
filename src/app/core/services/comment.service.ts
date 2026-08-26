@@ -13,6 +13,7 @@ export class CommentService {
       .from('post_comments')
       .select('*, profiles(username, avatar_url)')
       .eq('post_id', postId)
+      // Ordre chronologique : les commentaires les plus anciens apparaissent en premier
       .order('created_at', { ascending: true });
     return (data as PostComment[]) ?? [];
   }
@@ -24,6 +25,7 @@ export class CommentService {
     const { data, error } = await this.supabase.client
       .from('post_comments')
       .insert({ post_id: postId, user_id: userId, content: content.trim() })
+      // La jointure profiles est sélectionnée à l'insertion pour afficher l'auteur immédiatement sans rechargement
       .select('*, profiles(username, avatar_url)')
       .single();
 

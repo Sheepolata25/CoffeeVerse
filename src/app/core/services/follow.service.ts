@@ -10,7 +10,9 @@ export class FollowService {
   myFollowersCount = signal(0);
   myFollowingCount = signal(0);
   followingList = signal<{ id: string; username: string; avatar_url: string | null }[]>([]);
+  // IDs seuls pour le filtrage rapide dans les computed (pas besoin des profils)
   blockedUserIds = signal<string[]>([]);
+  // Avec profils complets (username, avatar) pour l'affichage dans la sidebar Community
   blockedUsers = signal<{ id: string; username: string; avatar_url: string | null }[]>([]);
 
   async loadBlockedUsers() {
@@ -36,6 +38,7 @@ export class FollowService {
   }
 
   async loadFollowingList() {
+    // Même logique en deux étapes que loadBlockedUsers : IDs d'abord, puis profils complets
     const userId = this.auth.currentUser()?.id;
     if (!userId) { this.followingList.set([]); return; }
 
@@ -97,6 +100,8 @@ export class FollowService {
     if (!error) this.myFollowingCount.update(c => Math.max(0, c - 1));
   }
 
+  // block() recharge les deux signaux (nécessaire pour récupérer les profils) ;
+  // unblock() les met à jour directement car on a déjà les données en mémoire
   async block(targetUserId: string) {
     const userId = this.auth.currentUser()?.id;
     if (!userId) return;

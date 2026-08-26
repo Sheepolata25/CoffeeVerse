@@ -32,6 +32,8 @@ export class Home {
   private dataLoaded = false;
 
   constructor() {
+    // effect() plutôt que ngOnInit() : au refresh, l'auth Supabase est async et currentUser()
+    // peut être null au premier rendu. dataLoaded évite les appels multiples si le signal re-déclenche.
     effect(() => {
       const userId = this.currentUser()?.id;
       if (userId && !this.dataLoaded) {
