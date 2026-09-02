@@ -18,6 +18,7 @@ export class RoasterService {
       .select('*', { count: 'exact', head: true })
       .eq('status', 'approved');
     if (!count) return;
+    // Timestamp converti en jours entiers, modulo le total → même torréfacteur pour tout le monde chaque jour
     const offset = Math.floor(Date.now() / 86400000) % count;
     const { data } = await this.supabase.client
       .from('roasters')
@@ -110,7 +111,7 @@ export class RoasterService {
         body: `data=${encodeURIComponent(query)}`,
       });
 
-      // openstreetmap.fr is more reliable for global queries
+      // openstreetmap.fr plus fiable pour les requêtes globales, overpass-api.de en fallback
       let res = await tryFetch('https://overpass.openstreetmap.fr/api/interpreter');
       if (!res.ok) res = await tryFetch('https://overpass-api.de/api/interpreter');
       if (!res.ok) {
@@ -140,6 +141,7 @@ export class RoasterService {
       let firstSupabaseError: any = null;
       const chunkSize = 500;
       for (let i = 0; i < rows.length; i += chunkSize) {
+        // onConflict: 'osm_id' → mise à jour si le torréfacteur existe déjà (import idempotent)
         const { error } = await this.supabase.client
           .from('roasters')
           .upsert(rows.slice(i, i + chunkSize), { onConflict: 'osm_id' });

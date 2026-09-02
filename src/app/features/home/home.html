@@ -1,57 +1,10 @@
-<div class="flex flex-col gap-4 h-[calc(100vh-2.5rem)]">
-
-  <!-- Top bar: search + user card -->
-  <div class="flex gap-6 shrink-0">
-
-    <div class="flex-1 card flex items-center gap-4 py-3 bg-surface p-4 rounded-2xl shadow-soft">
-      <svg class="w-5 h-5 shrink-0 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-      </svg>
-      <input type="text" placeholder="Rechercher..."
-        [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
-        class="bg-transparent outline-none flex-1 placeholder-text-secondary text-text-primary" />
-      @if (searchQuery()) {
-        <button (click)="searchQuery.set('')" class="text-text-secondary hover:text-text-primary transition-colors">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      }
-    </div>
-
-    <a routerLink="/profile" class="w-72 shrink-0 card flex items-center gap-3 cursor-pointer">
-      <div class="w-12 h-12 rounded-full bg-primary-soft flex items-center justify-center shrink-0 overflow-hidden">
-        @if (profile()?.avatar_url) {
-          <img [src]="profile()!.avatar_url" [alt]="profile()!.username" class="w-full h-full object-cover" />
-        } @else {
-          <svg class="w-6 h-6 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-          </svg>
-        }
-      </div>
-      <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-2 mb-0.5">
-          <span class="font-semibold text-text-primary">{{ profile()?.username }}</span>
-          <span class="bg-primary-soft text-primary text-xs font-medium px-2 py-0.5 rounded-full">
-            {{ profile()?.badge }}
-          </span>
-        </div>
-        <p class="text-sm text-text-secondary truncate">{{ profile()?.bio || 'Coffee enthusiast ☕' }}</p>
-      </div>
-      <svg class="w-5 h-5 text-text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-      </svg>
-    </a>
-
-  </div>
+<div class="h-[calc(100vh-2rem)]">
 
   <!-- Body -->
-  <div class="flex gap-6 flex-1 min-h-0">
+  <div class="flex gap-6 h-full min-h-0">
 
     <!-- Main column -->
-    <div class="flex-1 min-h-0 flex flex-col gap-4 pb-2">
+    <div class="flex-1 min-h-0 flex flex-col gap-4">
 
       <!-- Welcome card -->
       <div class="card rounded-2xl pl-5 py-8 flex items-center justify-between gap-6 overflow-hidden bg-surface shrink-0">
@@ -64,7 +17,7 @@
             </span>
             <span class="text-text-secondary/30">·</span>
             <span class="text-sm text-text-secondary">
-              <span class="font-bold text-primary text-base">{{ favoriteCount() }}</span> favoris
+              <span class="font-bold text-primary text-base">{{ favoriteCount() }}</span> favorites
             </span>
           </div>
         </div>
@@ -243,7 +196,33 @@
     </div>
 
     <!-- Right sidebar -->
-    <div class="w-72 shrink-0 flex flex-col overflow-y-auto pt-8 pb-2">
+    <div class="w-72 shrink-0 flex flex-col gap-4">
+
+      <!-- User card -->
+      <a routerLink="/profile" class="card shrink-0 flex items-center gap-3 cursor-pointer">
+        <div class="w-12 h-12 rounded-full bg-primary-soft flex items-center justify-center shrink-0 overflow-hidden">
+          @if (profile()?.avatar_url) {
+            <img [src]="profile()!.avatar_url" [alt]="profile()!.username" class="w-full h-full object-cover" />
+          } @else {
+            <svg class="w-6 h-6 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          }
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-0.5">
+            <span class="font-semibold text-text-primary">{{ profile()?.username }}</span>
+            <span class="bg-primary-soft text-primary text-xs font-medium px-2 py-0.5 rounded-full">
+              {{ profile()?.badge }}
+            </span>
+          </div>
+          <p class="text-sm text-text-secondary truncate">{{ profile()?.bio || 'Coffee enthusiast ☕' }}</p>
+        </div>
+        <svg class="w-5 h-5 text-text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </a>
 
       <!-- Activity feed -->
       <div class="card flex flex-col gap-3 flex-1 overflow-y-auto">

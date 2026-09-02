@@ -1,7 +1,6 @@
 import { Component, inject, signal, effect } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { ActivityService } from '../../core/services/activity.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ProfileService } from '../../core/services/profile.service';
@@ -11,7 +10,7 @@ import { Post } from '../../core/models/post.model';
 
 @Component({
   selector: 'app-home',
-  imports: [DatePipe, RouterLink, FormsModule],
+  imports: [DatePipe, RouterLink],
   templateUrl: './home.html',
 })
 export class Home {
@@ -26,7 +25,6 @@ export class Home {
   activities = this.activityService.activities;
   dailyRoaster = this.roasterService.dailyRoaster;
 
-  searchQuery = signal('');
   recentPosts = signal<Post[]>([]);
   postCount = signal(0);
   favoriteCount = signal(0);
@@ -34,6 +32,8 @@ export class Home {
   private dataLoaded = false;
 
   constructor() {
+    // effect() plutôt que ngOnInit() : au refresh, l'auth Supabase est async et currentUser()
+    // peut être null au premier rendu. dataLoaded évite les appels multiples si le signal re-déclenche.
     effect(() => {
       const userId = this.currentUser()?.id;
       if (userId && !this.dataLoaded) {
@@ -61,10 +61,10 @@ export class Home {
 
   activityLabel(type: string): string {
     const labels: Record<string, string> = {
-      like: 'Vous avez aimé',
-      favorite: 'Vous avez enregistré',
-      comment: 'Vous avez commenté',
-      post: 'Vous avez publié',
+      like: 'You liked',
+      favorite: 'You saved',
+      comment: 'You commented',
+      post: 'You published',
     };
     return labels[type] ?? type;
   }
@@ -72,11 +72,11 @@ export class Home {
   relativeTime(dateStr: string): string {
     const diff = Date.now() - new Date(dateStr).getTime();
     const mins = Math.floor(diff / 60000);
-    if (mins < 1) return "À l'instant";
-    if (mins < 60) return `il y a ${mins}min`;
+    if (mins < 1) return "Now";
+    if (mins < 60) return `${mins}mins ago`;
     const hours = Math.floor(mins / 60);
-    if (hours < 24) return `il y a ${hours}h`;
+    if (hours < 24) return `${hours}h ago`;
     const days = Math.floor(hours / 24);
-    return `il y a ${days}j`;
+    return `${days}d ago`;
   }
 }

@@ -3,6 +3,8 @@
     @apply bg-surface rounded-2xl shadow-card p-4 transition hover:shadow-soft;
   }
 
+  /* Double sélecteur pour surpasser la spécificité de .card seul : border-radius shorthand dans .card
+     écrase les border-*-radius individuels si la spécificité est égale */
   .card.card-top {
     border-top-left-radius: 1rem;
     border-top-right-radius: 1rem;

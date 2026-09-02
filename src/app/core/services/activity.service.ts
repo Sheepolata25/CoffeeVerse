@@ -24,12 +24,45 @@ export class ActivityService {
     this.activities.set((data as Activity[]) ?? []);
   }
 
-  async track(type: Activity['type'], postId: string, postTitle: string) {
+  // Appelé lors d'un unlike/unfavorite pour retirer l'activité du feed immédiatement
+  async remove(type: Activity['type'], postId: string) {
     const userId = this.auth.currentUser()?.id;
     if (!userId) return;
 
     await this.supabase.client
       .from('activities')
-      .insert({ user_id: userId, type, post_id: postId, post_title: postTitle });
+      .delete()
+      .eq('user_id', userId)
+      .eq('type', type)
+      .eq('post_id', postId);
+
+    this.activities.update(acts => acts.filter(a => !(a.type === type && a.post_id === postId)));
+  }
+
+  async track(type: Activity['type'], postId: string, postTitle: string) {
+    const userId = this.auth.currentUser()?.id;
+    if (!userId) return;
+
+    // Suppression avant insertion pour éviter les doublons (ex: like → unlike → re-like)
+    await this.supabase.client
+      .from('activities')
+      .delete()
+      .eq('user_id', userId)
+      .eq('type', type)
+      .eq('post_id', postId);
+
+    const { data } = await this.supabase.client
+      .from('activities')
+      .insert({ user_id: userId, type, post_id: postId, post_title: postTitle })
+      .select('*')
+      .single();
+
+    // Mise à jour locale du signal : évite un rechargement complet depuis la base
+    if (data) {
+      this.activities.update(acts => [
+        data as Activity,
+        ...acts.filter(a => !(a.type === type && a.post_id === postId)),
+      ].slice(0, 20));
+    }
   }
 }

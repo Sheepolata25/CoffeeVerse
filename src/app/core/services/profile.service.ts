@@ -11,6 +11,7 @@ export class ProfileService {
   profile = signal<Profile | null>(null);
 
   constructor() {
+    // Charge automatiquement le profil dès que l'utilisateur se connecte ; le remet à null si déconnecté
     effect(() => {
       const user = this.auth.currentUser();
       if (user) {
@@ -43,6 +44,7 @@ export class ProfileService {
     this.profile.set(data);
   }
 
+  // id, badge, created_at, updated_at sont gérés par la base et ne doivent pas être modifiés directement
   async updateProfile(updates: Partial<Omit<Profile, 'id' | 'badge' | 'created_at' | 'updated_at'>>) {
     const userId = this.auth.currentUser()?.id;
     if (!userId) return { error: new Error('Non authentifié') };
